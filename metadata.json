@@ -1,0 +1,6 @@
+{
+  "name": "Pixel Harf",
+  "description": "An Arabic-letter pixel snake game where players eat rasterized Arabic letter grids across progressive worlds.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
