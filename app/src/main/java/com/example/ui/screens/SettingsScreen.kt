@@ -1,7 +1,5 @@
 package com.example.ui.screens
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,44 +8,44 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.example.R
 import com.example.i18n.AppStrings
 import com.example.model.AppLanguage
 import com.example.model.ControlScheme
 import com.example.model.GameMode
 import com.example.model.UserSettings
-import com.example.ui.theme.LocalBoardPalette
+import com.example.ui.Dimens
+import com.example.ui.components.CircleButton
+import com.example.ui.components.DotIconType
+import com.example.ui.components.DotText
+import com.example.ui.components.NothingSwitch
+import com.example.ui.components.UiAppearanceState
+import com.example.ui.components.WidgetCard
+import com.example.ui.components.widgetStaggerEntrance
+import com.example.ui.theme.LocalNothingPalette
+import com.example.ui.theme.WidgetRadius
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
   strings: AppStrings,
   settings: UserSettings,
+  appearance: UiAppearanceState,
   onSetLanguage: (AppLanguage) -> Unit,
   onSetControlScheme: (ControlScheme) -> Unit,
   onSetGameMode: (GameMode) -> Unit,
@@ -56,195 +54,250 @@ fun SettingsScreen(
   onSetTts: (Boolean) -> Unit,
   onSetColorblind: (Boolean) -> Unit,
   onSetLargeText: (Boolean) -> Unit,
+  onSetUseDotPixels: (Boolean) -> Unit,
+  onSetDarkVariant: (Boolean) -> Unit,
+  onSetGlyphPulse: (Boolean) -> Unit,
   onBack: () -> Unit,
 ) {
-  val palette = LocalBoardPalette.current
+  val palette = LocalNothingPalette.current
 
-  Scaffold(
-    containerColor = MaterialTheme.colorScheme.background,
-    topBar = {
-      TopAppBar(
-        title = {
-          Text(
-            text = strings.settings,
-            style = MaterialTheme.typography.titleLarge,
-          )
-        },
-        navigationIcon = {
-          IconButton(
-            onClick = onBack,
-            modifier = Modifier.minimumInteractiveComponentSize().testTag("settings_back_button"),
-          ) {
-            Icon(
-              imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-              contentDescription = strings.backHome,
-            )
-          }
-        },
-        colors =
-          TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.background,
-          ),
-      )
-    },
-  ) { innerPadding ->
-    Box(
-      modifier = Modifier.fillMaxSize().padding(innerPadding),
-      contentAlignment = Alignment.TopCenter,
+  Box(
+    modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding(),
+    contentAlignment = Alignment.TopCenter,
+  ) {
+    Column(
+      modifier =
+        Modifier.widthIn(max = 560.dp)
+          .fillMaxSize()
+          .verticalScroll(rememberScrollState())
+          .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceMd),
+      verticalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
     ) {
-      Column(
-        modifier =
-          Modifier.widthIn(max = 560.dp)
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
+      // Header: single DotText title (<= 28sp) + 48dp Back CircleButton
+      Row(
+        modifier = Modifier.fillMaxWidth().height(Dimens.TopBarHeight).widgetStaggerEntrance(0),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
       ) {
-        // Language selector
-        SettingSectionTitle(strings.settingsLanguage)
+        CircleButton(
+          iconType = DotIconType.BACK,
+          contentDescription = strings.backHome,
+          onClick = onBack,
+          size = Dimens.SmallCircleButtonSize,
+          dotSize = 2.0.dp,
+          mirrorForRtl = true,
+          hapticsEnabled = settings.hapticsEnabled,
+          modifier = Modifier.testTag("settings_back_button"),
+        )
+        DotText(
+          text = strings.settings,
+          fontResId = R.font.noto_kufi_arabic,
+          dotSize = Dimens.DotTitleDotSize,
+          color = palette.ink,
+          targetRows = 14,
+        )
+      }
+
+      SettingsGroupCard(index = 1, title = strings.settingsLanguage) {
         Row(
           modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.spacedBy(8.dp),
+          horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
         ) {
           AppLanguage.entries.forEach { lang ->
-            SelectablePill(
+            SettingOptionPill(
               label = lang.nativeLabel,
               selected = settings.language == lang,
               onClick = { onSetLanguage(lang) },
+              hapticsEnabled = settings.hapticsEnabled,
               modifier = Modifier.weight(1f).testTag("lang_${lang.code}"),
             )
           }
         }
+      }
 
-        // Control scheme selector
-        SettingSectionTitle(strings.settingsControls)
+      SettingsGroupCard(index = 2, title = strings.settingsPixelStyle) {
         Row(
           modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.spacedBy(8.dp),
+          horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
         ) {
-          SelectablePill(
+          SettingOptionPill(
+            label = strings.styleDots,
+            selected = appearance.useDotPixels,
+            onClick = { onSetUseDotPixels(true) },
+            hapticsEnabled = settings.hapticsEnabled,
+            modifier = Modifier.weight(1f).testTag("style_dots"),
+          )
+          SettingOptionPill(
+            label = strings.styleSquares,
+            selected = !appearance.useDotPixels,
+            onClick = { onSetUseDotPixels(false) },
+            hapticsEnabled = settings.hapticsEnabled,
+            modifier = Modifier.weight(1f).testTag("style_squares"),
+          )
+        }
+      }
+
+      SettingsGroupCard(index = 3, title = strings.settingsControls) {
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+        ) {
+          SettingOptionPill(
             label = strings.controlSwipe,
             selected = settings.controlScheme == ControlScheme.SWIPE,
             onClick = { onSetControlScheme(ControlScheme.SWIPE) },
+            hapticsEnabled = settings.hapticsEnabled,
             modifier = Modifier.weight(1f).testTag("control_swipe"),
           )
-          SelectablePill(
+          SettingOptionPill(
             label = strings.controlTapZones,
             selected = settings.controlScheme == ControlScheme.TAP_ZONES,
             onClick = { onSetControlScheme(ControlScheme.TAP_ZONES) },
+            hapticsEnabled = settings.hapticsEnabled,
             modifier = Modifier.weight(1f).testTag("control_tap_zones"),
           )
         }
+      }
 
-        // Mode selector
-        SettingSectionTitle(strings.settingsMode)
+      SettingsGroupCard(index = 4, title = strings.settingsMode) {
         Row(
           modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.spacedBy(8.dp),
+          horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
         ) {
-          SelectablePill(
+          SettingOptionPill(
             label = strings.modeKids,
             selected = settings.gameMode == GameMode.KIDS,
             onClick = { onSetGameMode(GameMode.KIDS) },
+            hapticsEnabled = settings.hapticsEnabled,
             modifier = Modifier.weight(1f),
           )
-          SelectablePill(
+          SettingOptionPill(
             label = strings.modeClassic,
             selected = settings.gameMode == GameMode.CLASSIC,
             onClick = { onSetGameMode(GameMode.CLASSIC) },
+            hapticsEnabled = settings.hapticsEnabled,
             modifier = Modifier.weight(1f),
           )
-          SelectablePill(
+          SettingOptionPill(
             label = strings.modeHard,
             selected = settings.gameMode == GameMode.HARD,
             onClick = { onSetGameMode(GameMode.HARD) },
+            hapticsEnabled = settings.hapticsEnabled,
             modifier = Modifier.weight(1f),
           )
         }
-
-        // Toggles card
-        Surface(
-          shape = RoundedCornerShape(16.dp),
-          color = palette.cardBackground,
-          border = BorderStroke(1.dp, palette.cardBorder),
-        ) {
-          Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-            SettingToggleRow(
-              label = strings.settingsSound,
-              checked = settings.soundEnabled,
-              onCheckedChange = onSetSound,
-              testTag = "toggle_sound",
-            )
-            SettingToggleRow(
-              label = strings.settingsHaptics,
-              checked = settings.hapticsEnabled,
-              onCheckedChange = onSetHaptics,
-              testTag = "toggle_haptics",
-            )
-            SettingToggleRow(
-              label = strings.settingsTts,
-              checked = settings.ttsEnabled,
-              onCheckedChange = onSetTts,
-              testTag = "toggle_tts",
-            )
-            SettingToggleRow(
-              label = strings.settingsColorblind,
-              checked = settings.colorblindSafe,
-              onCheckedChange = onSetColorblind,
-              testTag = "toggle_colorblind",
-            )
-            SettingToggleRow(
-              label = strings.settingsLargeText,
-              checked = settings.largeText,
-              onCheckedChange = onSetLargeText,
-              testTag = "toggle_large_text",
-            )
-          }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
       }
+
+      WidgetCard(
+        modifier = Modifier.fillMaxWidth().widgetStaggerEntrance(5),
+        shape = WidgetRadius.Card,
+        cornerRadiusDp = Dimens.CardRadius,
+      ) {
+        Column(
+          modifier = Modifier.padding(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceMd),
+          verticalArrangement = Arrangement.spacedBy(Dimens.SpaceXs),
+        ) {
+          NothingToggleRow(
+            label = strings.settingsDarkVariant,
+            checked = appearance.darkVariant,
+            onCheckedChange = onSetDarkVariant,
+            testTag = "toggle_dark_variant",
+          )
+          NothingToggleRow(
+            label = strings.settingsGlyphPulse,
+            checked = appearance.glyphPulseEnabled,
+            onCheckedChange = onSetGlyphPulse,
+            testTag = "toggle_glyph_pulse",
+          )
+          NothingToggleRow(
+            label = strings.settingsSound,
+            checked = settings.soundEnabled,
+            onCheckedChange = onSetSound,
+            testTag = "toggle_sound",
+          )
+          NothingToggleRow(
+            label = strings.settingsHaptics,
+            checked = settings.hapticsEnabled,
+            onCheckedChange = onSetHaptics,
+            testTag = "toggle_haptics",
+          )
+          NothingToggleRow(
+            label = strings.settingsTts,
+            checked = settings.ttsEnabled,
+            onCheckedChange = onSetTts,
+            testTag = "toggle_tts",
+          )
+          NothingToggleRow(
+            label = strings.settingsColorblind,
+            checked = settings.colorblindSafe,
+            onCheckedChange = onSetColorblind,
+            testTag = "toggle_colorblind",
+          )
+          NothingToggleRow(
+            label = strings.settingsLargeText,
+            checked = settings.largeText,
+            onCheckedChange = onSetLargeText,
+            testTag = "toggle_large_text",
+          )
+        }
+      }
+
+      Spacer(modifier = Modifier.height(Dimens.SpaceMd))
     }
   }
 }
 
 @Composable
-private fun SettingSectionTitle(text: String) {
-  Text(
-    text = text,
-    style = MaterialTheme.typography.titleMedium,
-    color = MaterialTheme.colorScheme.onBackground,
-  )
+private fun SettingsGroupCard(
+  index: Int,
+  title: String,
+  content: @Composable () -> Unit,
+) {
+  val palette = LocalNothingPalette.current
+  WidgetCard(
+    modifier = Modifier.fillMaxWidth().widgetStaggerEntrance(index),
+    shape = WidgetRadius.Card,
+    cornerRadiusDp = Dimens.CardRadius,
+  ) {
+    Column(
+      modifier = Modifier.fillMaxWidth().padding(Dimens.SpaceLg),
+      verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+    ) {
+      Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium,
+        fontSize = Dimens.BodySp,
+        fontWeight = FontWeight.SemiBold,
+        color = palette.ink,
+      )
+      content()
+    }
+  }
 }
 
 @Composable
-private fun SelectablePill(
+private fun SettingOptionPill(
   label: String,
   selected: Boolean,
   onClick: () -> Unit,
+  hapticsEnabled: Boolean,
   modifier: Modifier = Modifier,
 ) {
-  val palette = LocalBoardPalette.current
-  Surface(
-    modifier =
-      modifier
-        .minimumInteractiveComponentSize()
-        .clip(RoundedCornerShape(12.dp))
-        .clickable(onClick = onClick),
-    shape = RoundedCornerShape(12.dp),
-    color = if (selected) palette.accent else palette.cardBackground,
-    border = BorderStroke(1.dp, if (selected) palette.accent else palette.cardBorder),
+  val palette = LocalNothingPalette.current
+  WidgetCard(
+    modifier = modifier.height(Dimens.ButtonHeight),
+    shape = WidgetRadius.Pill,
+    cornerRadiusDp = 24.dp,
+    backgroundColor = if (selected) palette.accent else palette.widgetPressed,
+    hapticsEnabled = hapticsEnabled,
+    onClick = onClick,
   ) {
-    Box(
-      modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp),
-      contentAlignment = Alignment.Center,
-    ) {
+    Box(modifier = Modifier.fillMaxSize().padding(horizontal = Dimens.SpaceSm), contentAlignment = Alignment.Center) {
       Text(
         text = label,
         style = MaterialTheme.typography.labelLarge,
-        color =
-          if (selected) MaterialTheme.colorScheme.onPrimary
-          else MaterialTheme.colorScheme.onSurface,
+        fontSize = Dimens.BodySp,
+        color = if (selected) Color.White else palette.ink,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
       )
@@ -253,37 +306,30 @@ private fun SelectablePill(
 }
 
 @Composable
-private fun SettingToggleRow(
+private fun NothingToggleRow(
   label: String,
   checked: Boolean,
   onCheckedChange: (Boolean) -> Unit,
   testTag: String,
 ) {
-  val palette = LocalBoardPalette.current
+  val palette = LocalNothingPalette.current
   Row(
-    modifier =
-      Modifier.fillMaxWidth()
-        .minimumInteractiveComponentSize()
-        .clickable { onCheckedChange(!checked) }
-        .padding(vertical = 8.dp),
+    modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.SpaceXs),
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.SpaceBetween,
   ) {
     Text(
       text = label,
       style = MaterialTheme.typography.bodyLarge,
-      color = MaterialTheme.colorScheme.onSurface,
-      modifier = Modifier.weight(1f).padding(end = 12.dp),
+      fontSize = Dimens.BodySp,
+      color = palette.ink,
+      modifier = Modifier.weight(1f).padding(end = Dimens.SpaceMd),
     )
-    Switch(
+    NothingSwitch(
       checked = checked,
       onCheckedChange = onCheckedChange,
+      contentDescription = label,
       modifier = Modifier.testTag(testTag),
-      colors =
-        SwitchDefaults.colors(
-          checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-          checkedTrackColor = palette.accent,
-        ),
     )
   }
 }

@@ -8,70 +8,72 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.R
 
+val DotoFontFamily = FontFamily(Font(R.font.doto, FontWeight.Normal))
+val IbmPlexArabicFamily = FontFamily(Font(R.font.ibm_plex_sans_arabic, FontWeight.Normal))
 val NotoKufiFamily = FontFamily(Font(R.font.noto_kufi_arabic, FontWeight.Normal))
 val NotoNaskhFamily = FontFamily(Font(R.font.noto_naskh_arabic, FontWeight.Normal))
 val AmiriFamily = FontFamily(Font(R.font.amiri, FontWeight.Normal))
 val ReemKufiFamily = FontFamily(Font(R.font.reem_kufi, FontWeight.Normal))
-val PixelScoreFamily = FontFamily(Font(R.font.silkscreen, FontWeight.Normal))
 
-fun buildAppTypography(largeText: Boolean): Typography {
-  val scale = if (largeText) 1.18f else 1.0f
+// Compact typography scale: buttons 18sp, body 14sp, captions 12sp. largeText scales readable copy only.
+fun buildNothingTypography(largeText: Boolean): Typography {
+  val bodyScale = if (largeText) 1.18f else 1.0f
   return Typography(
     displayLarge =
       TextStyle(
-        fontFamily = NotoKufiFamily,
+        fontFamily = DotoFontFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = (32 * scale).sp,
-        lineHeight = (40 * scale).sp,
+        fontSize = 28.sp,
+        lineHeight = 34.sp,
       ),
     headlineMedium =
       TextStyle(
-        fontFamily = NotoKufiFamily,
+        fontFamily = IbmPlexArabicFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = (22 * scale).sp,
-        lineHeight = (30 * scale).sp,
+        fontSize = (22 * bodyScale).sp,
+        lineHeight = (28 * bodyScale).sp,
       ),
     titleLarge =
       TextStyle(
-        fontFamily = NotoKufiFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = (18 * scale).sp,
-        lineHeight = (26 * scale).sp,
+        fontFamily = IbmPlexArabicFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = (18 * bodyScale).sp,
+        lineHeight = (24 * bodyScale).sp,
       ),
     titleMedium =
       TextStyle(
-        fontFamily = NotoKufiFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = (16 * scale).sp,
-        lineHeight = (22 * scale).sp,
+        fontFamily = IbmPlexArabicFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = (16 * bodyScale).sp,
+        lineHeight = (22 * bodyScale).sp,
       ),
     bodyLarge =
       TextStyle(
-        fontFamily = NotoKufiFamily,
+        fontFamily = IbmPlexArabicFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = (15 * scale).sp,
-        lineHeight = (22 * scale).sp,
+        fontSize = (14 * bodyScale).sp,
+        lineHeight = (20 * bodyScale).sp,
       ),
     bodyMedium =
       TextStyle(
-        fontFamily = NotoKufiFamily,
+        fontFamily = IbmPlexArabicFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = (13 * scale).sp,
-        lineHeight = (19 * scale).sp,
+        fontSize = (12 * bodyScale).sp,
+        lineHeight = (16 * bodyScale).sp,
       ),
     labelLarge =
       TextStyle(
-        fontFamily = NotoKufiFamily,
+        fontFamily = IbmPlexArabicFamily,
         fontWeight = FontWeight.SemiBold,
-        fontSize = (14 * scale).sp,
-        lineHeight = (20 * scale).sp,
+        fontSize = (14 * bodyScale).sp,
+        lineHeight = (18 * bodyScale).sp,
       ),
     labelSmall =
       TextStyle(
-        fontFamily = PixelScoreFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = (11 * scale).sp,
-        lineHeight = (15 * scale).sp,
+        fontFamily = DotoFontFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 12.sp,
+        lineHeight = 15.sp,
       ),
   )
 }

@@ -2,14 +2,14 @@ package com.example.i18n
 
 import com.example.model.AppLanguage
 import com.example.model.DeathReason
-import com.example.model.GameMode
 import com.example.model.PowerUpType
 
 data class AppStrings(
   val appTitle: String,
   val appSubtitle: String,
-  val playNow: String,
-  val continueLevel: (Int) -> String,
+  val playWord: String,
+  val levelBadge: (Int) -> String,
+  val modePillLabel: (String) -> String,
   val dailyChallenge: String,
   val dailyCompleted: String,
   val dailyStreak: (Int) -> String,
@@ -22,14 +22,13 @@ data class AppStrings(
   val modeClassicDesc: String,
   val modeHard: String,
   val modeHardDesc: String,
-  val levelHeader: (glyph: String, fontName: String) -> String,
-  val bossBadge: String,
-  val mirroredBadge: String,
+  val letterTitle: (glyph: String, name: String) -> String,
   val tapToStartHint: (bestScore: Int) -> String,
   val scoreLabel: String,
-  val pixelsLeft: (left: Int, total: Int) -> String,
+  val bestLabel: String,
   val comboBadge: (Int) -> String,
   val pausedTitle: String,
+  val pauseAction: String,
   val resume: String,
   val restart: String,
   val backToMap: String,
@@ -54,8 +53,19 @@ data class AppStrings(
   val settingsTts: String,
   val settingsColorblind: String,
   val settingsLargeText: String,
+  val settingsPixelStyle: String,
+  val styleDots: String,
+  val styleSquares: String,
+  val settingsDarkVariant: String,
+  val settingsGlyphPulse: String,
+  val progressLabel: String,
+  val soundLabel: String,
   val levelNumLabel: (Int) -> String,
   val starsTotal: (Int, Int) -> String,
+  val coachmarkPauseTitle: String,
+  val coachmarkPowerUpDesc: String,
+  val coachmarkDismiss: String,
+  val livesContentDesc: String,
 )
 
 fun stringsFor(language: AppLanguage): AppStrings =
@@ -64,35 +74,35 @@ fun stringsFor(language: AppLanguage): AppStrings =
       AppStrings(
         appTitle = "حرف بيكسل",
         appSubtitle = "الْتَهِم نقاط الحرف العربي وأَحيِ الخط",
-        playNow = "ابدأ اللعب",
-        continueLevel = { lvl -> "متابعة · المستوى $lvl" },
-        dailyChallenge = "التحدي اليومي",
-        dailyCompleted = "مكتمل اليوم ✓",
-        dailyStreak = { s -> "سلسلة $s أيام" },
-        levelMap = "خريطة الحروف",
+        playWord = "العب",
+        levelBadge = { lvl -> "المستوى $lvl" },
+        modePillLabel = { mode -> "الوضع: $mode" },
+        dailyChallenge = "تحدي اليوم",
+        dailyCompleted = "مكتمل ✓",
+        dailyStreak = { s -> "$s أيام" },
+        levelMap = "الخريطة",
         settings = "الإعدادات",
-        modesTitle = "وضع اللعب",
-        modeKids = "الأطفال",
+        modesTitle = "الوضع",
+        modeKids = "أطفال",
         modeKidsDesc = "بدون خسارة · سرعة هادئة · تلميح النقطة التالية",
         modeClassic = "كلاسيكي",
         modeClassicDesc = "تحدٍ متوازن مع نجوم التقييم",
         modeHard = "صعب",
         modeHardDesc = "سرعة عالية · حياتان فقط",
-        levelHeader = { glyph, fontName -> "حرف «$glyph» — من خط $fontName" },
-        bossBadge = "زعيم",
-        mirroredBadge = "تحكم معكوس",
+        letterTitle = { glyph, name -> "حرف «$glyph» · $name" },
         tapToStartHint = { best -> "اضغط لتبدأ · الأسهم ← → · أفضل نتيجة $best" },
         scoreLabel = "النقاط",
-        pixelsLeft = { left, total -> "$left / $total" },
+        bestLabel = "الأفضل",
         comboBadge = { c -> "×$c" },
-        pausedTitle = "استراحة قصيرة",
+        pausedTitle = "متوقف",
+        pauseAction = "إيقاف",
         resume = "استئناف",
         restart = "إعادة",
-        backToMap = "خريطة الحروف",
+        backToMap = "الخريطة",
         backHome = "الرئيسية",
         levelCompleteTitle = "أحسنت!",
-        nextLevel = "المستوى التالي",
-        replay = "إعادة اللعب",
+        nextLevel = "التالي",
+        replay = "إعادة",
         gameOverTitle = "انتهت المحاولات",
         deathReasonLabel = { reason ->
           when (reason) {
@@ -102,32 +112,25 @@ fun stringsFor(language: AppLanguage): AppStrings =
             null -> "حاول مجدداً"
           }
         },
-        worldTitle = { w ->
-          when (w) {
-            1 -> "العالم ١ · الحروف البسيطة"
-            2 -> "العالم ٢ · الحروف المتوسطة"
-            3 -> "العالم ٣ · الحروف المركّبة"
-            else -> "العالم ٤ · الإتقان والأشكال"
-          }
-        },
+        worldTitle = { w -> "العالم $w" },
         worldDesc = { w ->
           when (w) {
-            1 -> "جدران ملتفة · بدون اصطدام بالذيل"
-            2 -> "جدران صلبة · النقاط تمنح مكافأة"
-            3 -> "اصطدام الذيل مفعّل · دقة أعلى"
-            else -> "خطوط متنوعة · أشكال متصلة · بيكسل شبح متحرك"
+            1 -> "الحروف البسيطة · جدران ملتفة"
+            2 -> "الحروف المتوسطة · النقاط تمنح مكافأة"
+            3 -> "الحروف المركبة · اصطدام الذيل مفعل"
+            else -> "الإتقان والأشكال · خطوط متنوعة وشبح متحرك"
           }
         },
         powerUpLabel = { p ->
           when (p) {
             PowerUpType.SLOW_MO -> "إبطاء"
             PowerUpType.MAGNET -> "مغناطيس"
-            PowerUpType.GHOST -> "شبح ٥ث"
-            PowerUpType.SHRINK -> "تقصير الذيل"
+            PowerUpType.GHOST -> "شبح"
+            PowerUpType.SHRINK -> "تقليص"
           }
         },
-        tapTurnLeft = "يسار ↶",
-        tapTurnRight = "يمين ↷",
+        tapTurnLeft = "يسار",
+        tapTurnRight = "يمين",
         settingsLanguage = "اللغة",
         settingsControls = "التحكم",
         controlSwipe = "سحب باللمس",
@@ -136,43 +139,54 @@ fun stringsFor(language: AppLanguage): AppStrings =
         settingsSound = "مؤثرات 8-بت الصوتية",
         settingsHaptics = "الاهتزاز",
         settingsTts = "نطق الحرف بعد الفوز",
-        settingsColorblind = "ألوان مناسبة لعمى الألوان",
-        settingsLargeText = "تكبير الخط",
-        levelNumLabel = { n -> "م$n" },
-        starsTotal = { earned, total -> "$earned / $total ★" },
+        settingsColorblind = "ألوان وأشكال لعمى الألوان",
+        settingsLargeText = "تكبير النص المقروء",
+        settingsPixelStyle = "شكل النقاط في اللعب",
+        styleDots = "نقاط دائرية",
+        styleSquares = "مربعات",
+        settingsDarkVariant = "المظهر الداكن",
+        settingsGlyphPulse = "نبض الحروف في الرئيسية",
+        progressLabel = "الإنجاز",
+        soundLabel = "الصوت",
+        levelNumLabel = { n -> "$n" },
+        starsTotal = { earned, total -> "$earned/$total" },
+        coachmarkPauseTitle = "زر الإيقاف المؤقت هنا للراحة أو الإعادة",
+        coachmarkPowerUpDesc = "تظهر قدرات التعزيز هنا أثناء اللعب عند التقاطها",
+        coachmarkDismiss = "فهمت",
+        livesContentDesc = "المحاولات المتبقية",
       )
     AppLanguage.EN ->
       AppStrings(
         appTitle = "Pixel Harf",
-        appSubtitle = "Eat every pixel of the Arabic letter",
-        playNow = "Play",
-        continueLevel = { lvl -> "Continue · Level $lvl" },
-        dailyChallenge = "Daily Challenge",
-        dailyCompleted = "Done Today ✓",
-        dailyStreak = { s -> "$s day streak" },
-        levelMap = "Letter Map",
+        appSubtitle = "Eat every dot of the Arabic letter",
+        playWord = "Play",
+        levelBadge = { lvl -> "Level $lvl" },
+        modePillLabel = { mode -> "Mode: $mode" },
+        dailyChallenge = "Daily",
+        dailyCompleted = "Done ✓",
+        dailyStreak = { s -> "${s}d" },
+        levelMap = "Map",
         settings = "Settings",
-        modesTitle = "Game Mode",
+        modesTitle = "Modes",
         modeKids = "Kids",
-        modeKidsDesc = "No death · gentle speed · next-pixel hints",
+        modeKidsDesc = "No death · gentle pace · next-dot hints",
         modeClassic = "Classic",
         modeClassicDesc = "Balanced progression & 3-star mastery",
         modeHard = "Hard",
         modeHardDesc = "High speed · 2 lives only",
-        levelHeader = { glyph, fontName -> "Letter «$glyph» — $fontName" },
-        bossBadge = "BOSS",
-        mirroredBadge = "Mirrored",
+        letterTitle = { glyph, name -> "Letter «$glyph» · $name" },
         tapToStartHint = { best -> "Tap to start · Arrows ← → · Best $best" },
         scoreLabel = "SCORE",
-        pixelsLeft = { left, total -> "$left / $total" },
-        comboBadge = { c -> "×$c" },
+        bestLabel = "BEST",
+        comboBadge = { c -> "x$c" },
         pausedTitle = "Paused",
+        pauseAction = "Pause",
         resume = "Resume",
         restart = "Restart",
-        backToMap = "Level Map",
+        backToMap = "Map",
         backHome = "Home",
-        levelCompleteTitle = "Letter Cleared!",
-        nextLevel = "Next Level",
+        levelCompleteTitle = "Cleared!",
+        nextLevel = "Next",
         replay = "Replay",
         gameOverTitle = "Game Over",
         deathReasonLabel = { reason ->
@@ -183,32 +197,25 @@ fun stringsFor(language: AppLanguage): AppStrings =
             null -> "Try again"
           }
         },
-        worldTitle = { w ->
-          when (w) {
-            1 -> "World 1 · Simple Shapes"
-            2 -> "World 2 · Medium Letters"
-            3 -> "World 3 · Complex Letters"
-            else -> "World 4 · Master Forms"
-          }
-        },
+        worldTitle = { w -> "World $w" },
         worldDesc = { w ->
           when (w) {
-            1 -> "Walls wrap · tail safe"
-            2 -> "Solid borders · bonus dot targets"
-            3 -> "Tail collision active · denser grid"
-            else -> "Multiple fonts · connected forms · moving ghost pixel"
+            1 -> "Simple shapes · wrapping borders"
+            2 -> "Medium letters · bonus dot targets"
+            3 -> "Complex letters · tail collision active"
+            else -> "Master forms · varied fonts & moving ghost dot"
           }
         },
         powerUpLabel = { p ->
           when (p) {
-            PowerUpType.SLOW_MO -> "Slow-Mo"
+            PowerUpType.SLOW_MO -> "Slow"
             PowerUpType.MAGNET -> "Magnet"
-            PowerUpType.GHOST -> "Ghost 5s"
+            PowerUpType.GHOST -> "Ghost"
             PowerUpType.SHRINK -> "Shrink"
           }
         },
-        tapTurnLeft = "↶ Left",
-        tapTurnRight = "Right ↷",
+        tapTurnLeft = "Left",
+        tapTurnRight = "Right",
         settingsLanguage = "Language",
         settingsControls = "Controls",
         controlSwipe = "Swipe",
@@ -217,45 +224,56 @@ fun stringsFor(language: AppLanguage): AppStrings =
         settingsSound = "8-Bit Sound Effects",
         settingsHaptics = "Haptics",
         settingsTts = "Speak Letter Name (Arabic TTS)",
-        settingsColorblind = "Colorblind-Safe Palette",
-        settingsLargeText = "Large Text",
-        levelNumLabel = { n -> "L$n" },
-        starsTotal = { earned, total -> "$earned / $total ★" },
+        settingsColorblind = "Colorblind-Safe Shapes & Palette",
+        settingsLargeText = "Large Readable Text",
+        settingsPixelStyle = "In-Game Pixel Style",
+        styleDots = "Dots",
+        styleSquares = "Squares",
+        settingsDarkVariant = "Dark Gadget Theme",
+        settingsGlyphPulse = "Home Glyph Pulse",
+        progressLabel = "Progress",
+        soundLabel = "Sound",
+        levelNumLabel = { n -> "$n" },
+        starsTotal = { earned, total -> "$earned/$total" },
+        coachmarkPauseTitle = "Tap Pause anytime to rest or restart",
+        coachmarkPowerUpDesc = "Active power-ups and timers appear here",
+        coachmarkDismiss = "Got it",
+        livesContentDesc = "Remaining lives",
       )
     AppLanguage.FR ->
       AppStrings(
         appTitle = "Pixel Harf",
-        appSubtitle = "Mangez chaque pixel de la lettre arabe",
-        playNow = "Jouer",
-        continueLevel = { lvl -> "Continuer · Niveau $lvl" },
-        dailyChallenge = "Défi du Jour",
-        dailyCompleted = "Terminé ✓",
-        dailyStreak = { s -> "Série de $s j" },
-        levelMap = "Carte des Lettres",
-        settings = "Paramètres",
-        modesTitle = "Mode de Jeu",
+        appSubtitle = "Mangez chaque point de la lettre arabe",
+        playWord = "Jouer",
+        levelBadge = { lvl -> "Niveau $lvl" },
+        modePillLabel = { mode -> "Mode : $mode" },
+        dailyChallenge = "Défi",
+        dailyCompleted = "Fait ✓",
+        dailyStreak = { s -> "${s}j" },
+        levelMap = "Carte",
+        settings = "Réglages",
+        modesTitle = "Modes",
         modeKids = "Enfants",
-        modeKidsDesc = "Sans défaite · vitesse douce · indices",
+        modeKidsDesc = "Sans défaite · rythme doux · indices",
         modeClassic = "Classique",
         modeClassicDesc = "Progression équilibrée · 3 étoiles",
         modeHard = "Difficile",
         modeHardDesc = "Haute vitesse · 2 vies seulement",
-        levelHeader = { glyph, fontName -> "Lettre «$glyph» — $fontName" },
-        bossBadge = "BOSS",
-        mirroredBadge = "Inversé",
+        letterTitle = { glyph, name -> "Lettre «$glyph» · $name" },
         tapToStartHint = { best -> "Touchez pour jouer · Flèches ← → · Record $best" },
         scoreLabel = "SCORE",
-        pixelsLeft = { left, total -> "$left / $total" },
-        comboBadge = { c -> "×$c" },
+        bestLabel = "RECORD",
+        comboBadge = { c -> "x$c" },
         pausedTitle = "Pause",
+        pauseAction = "Pause",
         resume = "Reprendre",
-        restart = "Recommencer",
+        restart = "Rejouer",
         backToMap = "Carte",
         backHome = "Accueil",
-        levelCompleteTitle = "Lettre Terminée !",
-        nextLevel = "Niveau Suivant",
+        levelCompleteTitle = "Bravo !",
+        nextLevel = "Suivant",
         replay = "Rejouer",
-        gameOverTitle = "Partie Terminée",
+        gameOverTitle = "Terminé",
         deathReasonLabel = { reason ->
           when (reason) {
             DeathReason.WALL -> "Collision bordure"
@@ -264,43 +282,47 @@ fun stringsFor(language: AppLanguage): AppStrings =
             null -> "Réessayez"
           }
         },
-        worldTitle = { w ->
-          when (w) {
-            1 -> "Monde 1 · Formes Simples"
-            2 -> "Monde 2 · Lettres Moyennes"
-            3 -> "Monde 3 · Lettres Complexes"
-            else -> "Monde 4 · Maître"
-          }
-        },
+        worldTitle = { w -> "Monde $w" },
         worldDesc = { w ->
           when (w) {
-            1 -> "Bords traversants · queue sûre"
-            2 -> "Bords solides · points bonus"
-            3 -> "Collision queue active · grille fine"
-            else -> "Polices variées · formes liées · pixel fantôme"
+            1 -> "Formes simples · bords traversants"
+            2 -> "Lettres moyennes · points bonus"
+            3 -> "Lettres complexes · collision queue active"
+            else -> "Maître · polices variées & point fantôme"
           }
         },
         powerUpLabel = { p ->
           when (p) {
             PowerUpType.SLOW_MO -> "Ralenti"
             PowerUpType.MAGNET -> "Aimant"
-            PowerUpType.GHOST -> "Fantôme 5s"
-            PowerUpType.SHRINK -> "Rétrécir"
+            PowerUpType.GHOST -> "Fantôme"
+            PowerUpType.SHRINK -> "Réduire"
           }
         },
-        tapTurnLeft = "↶ Gauche",
-        tapTurnRight = "Droite ↷",
+        tapTurnLeft = "Gauche",
+        tapTurnRight = "Droite",
         settingsLanguage = "Langue",
         settingsControls = "Contrôles",
         controlSwipe = "Glisser (Swipe)",
         controlTapZones = "Zones Gauche / Droite",
-        settingsMode = "Mode de Difficulté",
+        settingsMode = "Mode de Jeu",
         settingsSound = "Effets Sonores 8-Bit",
         settingsHaptics = "Vibrations",
         settingsTts = "Prononcer la lettre (Arabe)",
-        settingsColorblind = "Palette Daltonien",
-        settingsLargeText = "Grand Texte",
-        levelNumLabel = { n -> "N$n" },
-        starsTotal = { earned, total -> "$earned / $total ★" },
+        settingsColorblind = "Palette & Formes Daltonien",
+        settingsLargeText = "Grand Texte Lisible",
+        settingsPixelStyle = "Style des Pixels",
+        styleDots = "Points",
+        styleSquares = "Carrés",
+        settingsDarkVariant = "Thème Sombre",
+        settingsGlyphPulse = "Animation Glyphes Accueil",
+        progressLabel = "Progrès",
+        soundLabel = "Son",
+        levelNumLabel = { n -> "$n" },
+        starsTotal = { earned, total -> "$earned/$total" },
+        coachmarkPauseTitle = "Touchez Pause pour faire une pause ou rejouer",
+        coachmarkPowerUpDesc = "Les bonus actifs s'affichent ici",
+        coachmarkDismiss = "Compris",
+        livesContentDesc = "Vies restantes",
       )
   }
