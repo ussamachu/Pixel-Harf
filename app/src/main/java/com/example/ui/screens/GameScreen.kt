@@ -24,11 +24,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.FavoriteBorder
-import androidx.compose.material.icons.rounded.Pause
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -44,7 +39,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -68,19 +62,17 @@ import com.example.model.GameStatus
 import com.example.model.PowerUpType
 import com.example.model.UserSettings
 import com.example.ui.Dimens
-import com.example.ui.components.DotDigitText
-import com.example.ui.components.DotIcon
-import com.example.ui.components.DotIconType
+import com.example.ui.components.FlatCard
+import com.example.ui.components.HairlineDivider
+import com.example.ui.components.MonoDigitText
 import com.example.ui.components.PixelBoardCanvas
+import com.example.ui.components.PixelIcon
 import com.example.ui.components.UiAppearanceState
-import com.example.ui.components.WidgetCard
-import com.example.ui.theme.DotoFontFamily
-import com.example.ui.theme.LocalNothingPalette
+import com.example.ui.theme.AppShapes
+import com.example.ui.theme.JetBrainsMonoFamily
+import com.example.ui.theme.LocalPalette
 import com.example.ui.theme.LocalReduceMotion
-import com.example.ui.theme.WidgetRadius
 import kotlin.math.abs
-
-private val HeartRed = Color(0xFFE53935)
 
 @Composable
 fun GameScreen(
@@ -99,7 +91,7 @@ fun GameScreen(
   onBackHome: () -> Unit,
   onDismissCoachmark: () -> Unit,
 ) {
-  val palette = LocalNothingPalette.current
+  val palette = LocalPalette.current
   val reduceMotion = LocalReduceMotion.current
 
   BackHandler {
@@ -110,13 +102,12 @@ fun GameScreen(
     }
   }
 
-  // Heart loss pulse animation
   var prevLives by remember { mutableIntStateOf(gameState.lives) }
   val heartPulse = remember { Animatable(1f) }
   LaunchedEffect(gameState.lives) {
     if (gameState.lives < prevLives && !reduceMotion) {
-      heartPulse.snapTo(1.32f)
-      heartPulse.animateTo(1f, animationSpec = tween(260))
+      heartPulse.snapTo(1.30f)
+      heartPulse.animateTo(1f, animationSpec = tween(240))
     }
     prevLives = gameState.lives
   }
@@ -133,7 +124,7 @@ fun GameScreen(
       modifier = Modifier.widthIn(max = 580.dp).fillMaxSize(),
       horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-      // 1. TOP BAR: 3 compact items in one row, 56dp high: [score + combo] [letter name + small progress bar] [lives]
+      // 1. TOP BAR (56dp): [score + combo] | [letter name + thin orange progress] | [red hearts], separated by hairline
       CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
         Row(
           modifier =
@@ -143,34 +134,29 @@ fun GameScreen(
           verticalAlignment = Alignment.CenterVertically,
           horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
         ) {
-          // Item 1: Score + Combo
-          WidgetCard(
-            shape = WidgetRadius.Pill,
-            cornerRadiusDp = 20.dp,
+          // Score + combo in JetBrains Mono
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
           ) {
-            Row(
-              modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-              verticalAlignment = Alignment.CenterVertically,
-              horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-              DotDigitText(
-                value = gameState.score.toString().padStart(4, '0'),
-                fontSize = 16.sp,
-                color = palette.ink,
+            MonoDigitText(
+              value = gameState.score.toString().padStart(4, '0'),
+              fontSize = 16.sp,
+              fontWeight = FontWeight.Bold,
+              color = palette.ink,
+            )
+            if (gameState.combo >= 2) {
+              Text(
+                text = strings.comboBadge(gameState.combo),
+                fontFamily = JetBrainsMonoFamily,
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp,
+                color = palette.accent,
               )
-              if (gameState.combo >= 2) {
-                Text(
-                  text = strings.comboBadge(gameState.combo),
-                  fontFamily = DotoFontFamily,
-                  fontWeight = FontWeight.Bold,
-                  fontSize = 13.sp,
-                  color = palette.accent,
-                )
-              }
             }
           }
 
-          // Item 2: Letter name (single line, ellipsize) + small progress bar beneath (no 99/99 counter)
+          // Letter name (IBM Plex Arabic) + thin orange progress bar
           Column(
             modifier = Modifier.weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -192,13 +178,13 @@ fun GameScreen(
             )
             LinearProgressIndicator(
               progress = { progressFraction },
-              modifier = Modifier.fillMaxWidth(0.82f).height(4.dp).clip(RoundedCornerShape(2.dp)),
+              modifier = Modifier.fillMaxWidth(0.78f).height(3.dp).clip(RoundedCornerShape(2.dp)),
               color = palette.accent,
-              trackColor = palette.widgetSurface,
+              trackColor = palette.surface,
             )
           }
 
-          // Item 3: Lives (real filled RED #E53935 hearts + faint outline for lost lives) + optional Boss timer
+          // Red hearts + optional Boss timer
           Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -208,9 +194,9 @@ fun GameScreen(
               val sec = (gameState.timeRemainingMs / 1000L).toInt()
               Text(
                 text = "${sec}s",
-                fontFamily = DotoFontFamily,
+                fontFamily = JetBrainsMonoFamily,
                 fontWeight = FontWeight.Bold,
-                fontSize = 13.sp,
+                fontSize = 12.sp,
                 color = if (sec <= 15) palette.accent else palette.ink,
                 modifier = Modifier.padding(end = 2.dp),
               )
@@ -226,12 +212,10 @@ fun GameScreen(
               ) {
                 for (i in 1..gameState.maxLives) {
                   val alive = i <= gameState.lives
-                  Icon(
-                    imageVector =
-                      if (alive) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                  PixelIcon(
+                    type = if (alive) PixelIcon.HEART else PixelIcon.HEART_OUTLINE,
+                    size = 16.dp,
                     contentDescription = null,
-                    tint = if (alive) HeartRed else palette.mutedInk.copy(alpha = 0.38f),
-                    modifier = Modifier.size(18.dp),
                   )
                 }
               }
@@ -240,9 +224,11 @@ fun GameScreen(
         }
       }
 
-      Spacer(modifier = Modifier.height(Dimens.SpaceSm))
+      HairlineDivider(modifier = Modifier.fillMaxWidth())
 
-      // 2. HERO BOARD: fills available space (weight(1f)), 12dp horizontal margin, >=60% screen height
+      Spacer(modifier = Modifier.height(Dimens.SpaceMd))
+
+      // 2. HERO BOARD: fills remaining space with 12dp margin and 1dp hairline border
       var dragX by remember { mutableFloatStateOf(0f) }
       var dragY by remember { mutableFloatStateOf(0f) }
       var turnedInGesture by remember { mutableStateOf(false) }
@@ -303,17 +289,16 @@ fun GameScreen(
           useDotPixels = appearance.useDotPixels,
         )
 
-        // Tap-to-start hint in orange
         androidx.compose.animation.AnimatedVisibility(
           visible = gameState.status == GameStatus.READY,
           enter = fadeIn(),
           exit = fadeOut(),
         ) {
-          WidgetCard(
+          FlatCard(
             modifier = Modifier.padding(Dimens.SpaceLg).testTag("tap_to_start_hint"),
-            shape = WidgetRadius.Pill,
-            cornerRadiusDp = 24.dp,
-            backgroundColor = palette.widgetSurface.copy(alpha = 0.94f),
+            shape = AppShapes.Card,
+            backgroundColor = palette.canvas.copy(alpha = 0.94f),
+            borderColor = palette.accent,
             hapticsEnabled = settings.hapticsEnabled,
             onClick = onStartOrResume,
           ) {
@@ -330,19 +315,16 @@ fun GameScreen(
         }
       }
 
-      // Optional Left/Right Tap Zones when enabled in Settings
       if (settings.controlScheme == ControlScheme.TAP_ZONES) {
         Spacer(modifier = Modifier.height(Dimens.SpaceSm))
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
           Row(
-            modifier =
-              Modifier.fillMaxWidth().padding(horizontal = Dimens.ScreenPadding),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.ScreenPadding),
             horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
           ) {
-            WidgetCard(
+            FlatCard(
               modifier = Modifier.weight(1f).height(Dimens.ButtonHeight).testTag("tap_zone_left"),
-              shape = WidgetRadius.Pill,
-              cornerRadiusDp = 24.dp,
+              shape = AppShapes.Button,
               hapticsEnabled = settings.hapticsEnabled,
               onClick = { onTapTurn(true) },
             ) {
@@ -351,20 +333,19 @@ fun GameScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
               ) {
-                DotIcon(type = DotIconType.ARROW_LEFT, dotSize = 1.9.dp, color = palette.ink)
+                PixelIcon(type = PixelIcon.ARROW_LEFT, size = 16.dp)
                 Text(
                   text = strings.tapTurnLeft,
                   style = MaterialTheme.typography.bodyLarge,
                   fontSize = Dimens.BodySp,
-                  fontWeight = FontWeight.Bold,
+                  fontWeight = FontWeight.SemiBold,
                   color = palette.ink,
                 )
               }
             }
-            WidgetCard(
+            FlatCard(
               modifier = Modifier.weight(1f).height(Dimens.ButtonHeight).testTag("tap_zone_right"),
-              shape = WidgetRadius.Pill,
-              cornerRadiusDp = 24.dp,
+              shape = AppShapes.Button,
               hapticsEnabled = settings.hapticsEnabled,
               onClick = { onTapTurn(false) },
             ) {
@@ -377,18 +358,20 @@ fun GameScreen(
                   text = strings.tapTurnRight,
                   style = MaterialTheme.typography.bodyLarge,
                   fontSize = Dimens.BodySp,
-                  fontWeight = FontWeight.Bold,
+                  fontWeight = FontWeight.SemiBold,
                   color = palette.ink,
                 )
-                DotIcon(type = DotIconType.ARROW_RIGHT, dotSize = 1.9.dp, color = palette.ink)
+                PixelIcon(type = PixelIcon.ARROW_RIGHT, size = 16.dp)
               }
             }
           }
         }
       }
 
-      // 3. BOTTOM BAR (~80dp high, thumb-reachable):
-      //    Active power-ups only (56dp circle + icon + countdown ring + label) & labeled Pause button at opposite end
+      Spacer(modifier = Modifier.height(Dimens.SpaceSm))
+      HairlineDivider(modifier = Modifier.fillMaxWidth())
+
+      // 3. BOTTOM BAR: Labeled Pause button (two-bar icon) + active power-up chip with countdown ring & label
       Row(
         modifier =
           Modifier.fillMaxWidth()
@@ -397,10 +380,9 @@ fun GameScreen(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
       ) {
-        // Active power-ups only (hidden when none are active)
         val activeEffect = gameState.activeEffect
         if (activeEffect != null && gameState.effectRemainingMs > 0L) {
-          ActivePowerUpBadge(
+          ActivePowerUpChip(
             type = activeEffect,
             remainingMs = gameState.effectRemainingMs,
             label = strings.powerUpLabel(activeEffect),
@@ -409,15 +391,14 @@ fun GameScreen(
           Spacer(modifier = Modifier.width(1.dp))
         }
 
-        // Labeled Pause button with clear two-bar pause icon (not an arrow)
-        WidgetCard(
+        FlatCard(
           modifier = Modifier.height(Dimens.ButtonHeight).testTag("pause_button"),
-          shape = WidgetRadius.Pill,
-          cornerRadiusDp = 24.dp,
+          shape = AppShapes.Button,
           hapticsEnabled = settings.hapticsEnabled,
           onClick = {
-            if (gameState.status == GameStatus.PLAYING) onPause()
-            else if (gameState.status == GameStatus.READY) onPause()
+            if (gameState.status == GameStatus.PLAYING || gameState.status == GameStatus.READY) {
+              onPause()
+            }
           },
         ) {
           Row(
@@ -425,11 +406,10 @@ fun GameScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
           ) {
-            Icon(
-              imageVector = Icons.Rounded.Pause,
+            PixelIcon(
+              type = PixelIcon.PAUSE,
+              size = 16.dp,
               contentDescription = strings.pauseAction,
-              tint = palette.ink,
-              modifier = Modifier.size(20.dp),
             )
             Text(
               text = strings.pauseAction,
@@ -444,7 +424,6 @@ fun GameScreen(
       }
     }
 
-    // Full-screen dimmed overlays (keep board visible behind Pause/Complete/GameOver)
     CalligraphicDissolveOverlay(
       gameState = gameState,
       settings = settings,
@@ -488,60 +467,69 @@ fun GameScreen(
 }
 
 @Composable
-private fun ActivePowerUpBadge(
+private fun ActivePowerUpChip(
   type: PowerUpType,
   remainingMs: Long,
   label: String,
 ) {
-  val palette = LocalNothingPalette.current
+  val palette = LocalPalette.current
   val icon =
     when (type) {
-      PowerUpType.SLOW_MO -> DotIconType.SLOW_MO
-      PowerUpType.MAGNET -> DotIconType.MAGNET
-      PowerUpType.GHOST -> DotIconType.GHOST
-      PowerUpType.SHRINK -> DotIconType.SHRINK
+      PowerUpType.SLOW_MO -> PixelIcon.SLOW_MO
+      PowerUpType.MAGNET -> PixelIcon.MAGNET
+      PowerUpType.GHOST -> PixelIcon.GHOST
+      PowerUpType.SHRINK -> PixelIcon.SHRINK
     }
   val fraction = (remainingMs.toFloat() / 5500f).coerceIn(0f, 1f)
+  val secLeft = ((remainingMs + 999L) / 1000L).toInt()
 
-  Column(
-    horizontalAlignment = Alignment.CenterHorizontally,
-    verticalArrangement = Arrangement.spacedBy(2.dp),
+  Row(
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
   ) {
     Box(
       modifier = Modifier.size(Dimens.PowerUpCircleSize),
       contentAlignment = Alignment.Center,
     ) {
-      WidgetCard(
+      FlatCard(
         modifier = Modifier.fillMaxSize(),
-        shape = WidgetRadius.Circle,
-        cornerRadiusDp = 28.dp,
+        shape = AppShapes.Circle,
       ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-          DotIcon(
+          PixelIcon(
             type = icon,
-            dotSize = 2.0.dp,
-            color = palette.ink,
+            size = 24.dp,
+            isActive = true,
             contentDescription = label,
           )
         }
       }
-      // Circular countdown ring
       Canvas(modifier = Modifier.fillMaxSize()) {
         drawArc(
           color = palette.accent,
           startAngle = -90f,
           sweepAngle = 360f * fraction,
           useCenter = false,
-          style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round),
+          style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round),
         )
       }
     }
-    Text(
-      text = label,
-      style = MaterialTheme.typography.bodyMedium,
-      fontSize = Dimens.CaptionSp,
-      color = palette.ink,
-      maxLines = 1,
-    )
+    Column {
+      Text(
+        text = label,
+        style = MaterialTheme.typography.bodyLarge,
+        fontSize = Dimens.BodySp,
+        fontWeight = FontWeight.SemiBold,
+        color = palette.ink,
+        maxLines = 1,
+      )
+      Text(
+        text = "${secLeft}s",
+        fontFamily = JetBrainsMonoFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = Dimens.CaptionSp,
+        color = palette.accent,
+      )
+    }
   }
 }

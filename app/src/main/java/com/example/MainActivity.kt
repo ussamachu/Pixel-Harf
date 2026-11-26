@@ -20,13 +20,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.i18n.stringsFor
-import com.example.ui.components.GrainBackground
+import com.example.ui.components.FlatCanvasBackground
 import com.example.ui.components.UiAppearanceStore
 import com.example.ui.screens.GameScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.LevelMapScreen
 import com.example.ui.screens.SettingsScreen
-import com.example.ui.theme.NothingTheme
+import com.example.ui.theme.PixelHarfTheme
 import com.example.viewmodel.MainViewModel
 
 object AppRoutes {
@@ -53,15 +53,16 @@ class MainActivity : ComponentActivity() {
       val layoutDirection = if (settings.language.isRtl) LayoutDirection.Rtl else LayoutDirection.Ltr
 
       CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
-        NothingTheme(
+        PixelHarfTheme(
           darkVariant = appearance.darkVariant,
           colorblindSafe = settings.colorblindSafe,
           largeText = settings.largeText,
+          useDotPixels = appearance.useDotPixels,
         ) {
           val navController = rememberNavController()
 
           Box(modifier = Modifier.fillMaxSize()) {
-            GrainBackground()
+            FlatCanvasBackground()
 
             NavHost(
               navController = navController,

@@ -25,7 +25,7 @@ import kotlinx.coroutines.delay
 
 @Immutable
 data class UiAppearanceState(
-  val useDotPixels: Boolean = true,
+  val useDotPixels: Boolean = false, // Square pixels by default; dot mode optional in Settings
   val darkVariant: Boolean = false,
   val glyphPulseEnabled: Boolean = true,
   val hasSeenGameCoachmark: Boolean = false,
@@ -37,7 +37,7 @@ class UiAppearanceStore(context: Context) {
 
   fun load(): UiAppearanceState =
     UiAppearanceState(
-      useDotPixels = prefs.getBoolean("use_dot_pixels", true),
+      useDotPixels = prefs.getBoolean("use_dot_pixels", false),
       darkVariant = prefs.getBoolean("dark_variant", false),
       glyphPulseEnabled = prefs.getBoolean("glyph_pulse", true),
       hasSeenGameCoachmark = prefs.getBoolean("seen_game_coachmark", false),
@@ -72,10 +72,10 @@ fun rememberReduceMotion(): Boolean {
   }
 }
 
-private val NothingEaseOut = CubicBezierEasing(0.22f, 1f, 0.36f, 1f)
+private val EaseOut = CubicBezierEasing(0.22f, 1f, 0.36f, 1f)
 
 /**
- * Staggered widget entrance: soft slide + fade (150-220ms, ease-out), respecting reduce motion.
+ * Subtle staggered entrance respecting system reduce-motion.
  */
 fun Modifier.widgetStaggerEntrance(index: Int): Modifier = composed {
   val reduceMotion = LocalReduceMotion.current
@@ -85,7 +85,7 @@ fun Modifier.widgetStaggerEntrance(index: Int): Modifier = composed {
     if (reduceMotion) {
       visible = true
     } else {
-      delay((index.coerceIn(0, 8) * 28L))
+      delay((index.coerceIn(0, 6) * 24L))
       visible = true
     }
   }
@@ -93,30 +93,21 @@ fun Modifier.widgetStaggerEntrance(index: Int): Modifier = composed {
   val alpha by
     animateFloatAsState(
       targetValue = if (visible) 1f else 0f,
-      animationSpec = tween(durationMillis = if (reduceMotion) 0 else 190, easing = NothingEaseOut),
-      label = "widget_alpha",
-    )
-  val offsetY by
-    animateFloatAsState(
-      targetValue = if (visible) 0f else 14f,
-      animationSpec = tween(durationMillis = if (reduceMotion) 0 else 200, easing = NothingEaseOut),
-      label = "widget_slide",
+      animationSpec = tween(durationMillis = if (reduceMotion) 0 else 170, easing = EaseOut),
+      label = "entrance_alpha",
     )
 
-  this.graphicsLayer {
-    this.alpha = alpha
-    translationY = if (reduceMotion) 0f else offsetY
-  }
+  this.graphicsLayer { this.alpha = alpha }
 }
 
 /**
- * Mechanical press feedback: scales to 0.96 with a tiny haptic tick when pressed.
+ * Tactile haptic tick on press without glow/ripple.
  */
-fun Modifier.mechanicalPress(
+@Composable
+fun rememberPressHaptic(
   interactionSource: MutableInteractionSource,
-  hapticsEnabled: Boolean = true,
-): Modifier = composed {
-  val reduceMotion = LocalReduceMotion.current
+  hapticsEnabled: Boolean,
+): Boolean {
   val pressed by interactionSource.collectIsPressedAsState()
   val haptic = LocalHapticFeedback.current
 
@@ -125,16 +116,5 @@ fun Modifier.mechanicalPress(
       haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
     }
   }
-
-  val scale by
-    animateFloatAsState(
-      targetValue = if (pressed && !reduceMotion) 0.96f else 1f,
-      animationSpec = tween(durationMillis = if (reduceMotion) 0 else 90, easing = NothingEaseOut),
-      label = "press_scale",
-    )
-
-  this.graphicsLayer {
-    scaleX = scale
-    scaleY = scale
-  }
+  return pressed
 }

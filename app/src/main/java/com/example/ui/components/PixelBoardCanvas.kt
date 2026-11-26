@@ -23,15 +23,14 @@ import com.example.model.Direction
 import com.example.model.GameState
 import com.example.model.PowerUpType
 import com.example.ui.Dimens
-import com.example.ui.theme.LocalNothingPalette
+import com.example.ui.theme.AppShapes
+import com.example.ui.theme.LocalPalette
 import com.example.ui.theme.LocalReduceMotion
-import com.example.ui.theme.WidgetRadius
 import kotlin.math.min
-import kotlin.random.Random
 
 /**
- * Hero 60fps Canvas board filling its parent container (single card, no nested frames).
- * Zero allocations inside onDraw.
+ * Flat 8dp-radius 60fps Canvas board with 1dp hairline border (no shadows, no grain/noise).
+ * Square pixels by default; dot mode optional in Settings. Zero draw-loop allocations.
  */
 @Composable
 fun PixelBoardCanvas(
@@ -39,13 +38,9 @@ fun PixelBoardCanvas(
   useDotPixels: Boolean,
   modifier: Modifier = Modifier,
 ) {
-  val palette = LocalNothingPalette.current
+  val palette = LocalPalette.current
   val reduceMotion = LocalReduceMotion.current
 
-  val grainPoints = remember {
-    val rnd = Random(4242)
-    FloatArray(220) { rnd.nextFloat() }
-  }
   val arrowPath = remember { Path() }
 
   val pulseTransition = rememberInfiniteTransition(label = "board_pulse")
@@ -75,46 +70,35 @@ fun PixelBoardCanvas(
           translationX = shakeX
           translationY = shakeY
         }
-        .clip(WidgetRadius.BoardCard)
+        .clip(AppShapes.Board)
   ) {
     val boardW = size.width
     val boardH = size.height
     val cornerPx = Dimens.BoardRadius.toPx()
+    val strokePx = Dimens.HairlineWidth.toPx()
 
-    // 1. Single rounded widget card background + faint inner shadow
+    // 1. Flat 8dp surface + 1dp hairline border (no inner shadows or grain)
     drawRoundRect(
-      color = palette.widgetSurface,
+      color = palette.surface,
       topLeft = Offset.Zero,
       size = size,
       cornerRadius = CornerRadius(cornerPx, cornerPx),
     )
     drawRoundRect(
-      color = palette.innerShadow,
-      topLeft = Offset(2f, 2f),
-      size = Size(boardW - 4f, boardH - 4f),
-      cornerRadius = CornerRadius(cornerPx - 1f, cornerPx - 1f),
-      style = Stroke(width = 4.5f),
+      color = palette.hairline,
+      topLeft = Offset(strokePx * 0.5f, strokePx * 0.5f),
+      size = Size(boardW - strokePx, boardH - strokePx),
+      cornerRadius = CornerRadius(cornerPx, cornerPx),
+      style = Stroke(width = strokePx),
     )
 
-    // Subtle monochrome grain
-    val grainColor = palette.ink.copy(alpha = 0.04f)
-    var gi = 0
-    while (gi + 1 < grainPoints.size) {
-      drawCircle(
-        color = grainColor,
-        radius = 1.1f,
-        center = Offset(grainPoints[gi] * boardW, grainPoints[gi + 1] * boardH),
-      )
-      gi += 2
-    }
-
-    val pad = min(boardW, boardH) * 0.045f
+    val pad = min(boardW, boardH) * 0.04f
     val innerW = (boardW - pad * 2f).coerceAtLeast(1f)
     val innerH = (boardH - pad * 2f).coerceAtLeast(1f)
     val cell = min(innerW / cols.toFloat(), innerH / rows.toFloat())
     val originX = (boardW - cell * cols) * 0.5f
     val originY = (boardH - cell * rows) * 0.5f
-    val gap = cell * 0.16f
+    val gap = cell * 0.14f
     val pxSize = (cell - gap).coerceAtLeast(1.5f)
     val halfGap = gap * 0.5f
     val dotR = (pxSize * 0.48f).coerceAtLeast(1f)
@@ -123,13 +107,13 @@ fun PixelBoardCanvas(
     val baseline = gameState.baselinePixels
     for (i in 0 until baseline.size) {
       val p = baseline[i]
-      val cx = originX + p.x * cell + cell * 0.5f
-      val cy = originY + p.y * cell + cell * 0.5f
       if (useDotPixels) {
-        drawCircle(color = palette.baselineDot, radius = dotR * 0.68f, center = Offset(cx, cy))
+        val cx = originX + p.x * cell + cell * 0.5f
+        val cy = originY + p.y * cell + cell * 0.5f
+        drawCircle(color = palette.baselinePixel, radius = dotR * 0.68f, center = Offset(cx, cy))
       } else {
         drawRect(
-          color = palette.baselineDot,
+          color = palette.baselinePixel,
           topLeft = Offset(originX + p.x * cell + halfGap, originY + p.y * cell + halfGap),
           size = Size(pxSize, pxSize),
         )
@@ -142,11 +126,11 @@ fun PixelBoardCanvas(
     for (i in 0 until remaining.size) {
       val p = remaining[i]
       val isDot = dots.contains(p)
-      val cx = originX + p.x * cell + cell * 0.5f
-      val cy = originY + p.y * cell + cell * 0.5f
       val pxColor = if (isDot) palette.dotBonus else palette.ink
 
       if (useDotPixels) {
+        val cx = originX + p.x * cell + cell * 0.5f
+        val cy = originY + p.y * cell + cell * 0.5f
         drawCircle(color = pxColor, radius = dotR, center = Offset(cx, cy))
         if (isDot) {
           drawCircle(color = palette.accent, radius = dotR * 0.42f, center = Offset(cx, cy))
@@ -177,9 +161,9 @@ fun PixelBoardCanvas(
     // 4. Kids mode next-pixel hint outline
     val hint = gameState.hintPixel
     if (hint != null) {
-      val cx = originX + hint.x * cell + cell * 0.5f
-      val cy = originY + hint.y * cell + cell * 0.5f
       if (useDotPixels) {
+        val cx = originX + hint.x * cell + cell * 0.5f
+        val cy = originY + hint.y * cell + cell * 0.5f
         drawCircle(
           color = palette.accent.copy(alpha = pulse),
           radius = dotR * 1.32f,
@@ -201,10 +185,10 @@ fun PixelBoardCanvas(
     // 5. Power-up item
     val powerUp = gameState.activePowerUp
     if (powerUp != null) {
-      val cx = originX + powerUp.point.x * cell + cell * 0.5f
-      val cy = originY + powerUp.point.y * cell + cell * 0.5f
       val puAlpha = 0.4f + 0.6f * pulse
       if (useDotPixels && !palette.colorblindShapes) {
+        val cx = originX + powerUp.point.x * cell + cell * 0.5f
+        val cy = originY + powerUp.point.y * cell + cell * 0.5f
         drawCircle(color = palette.powerUp.copy(alpha = puAlpha), radius = dotR * 1.05f, center = Offset(cx, cy))
         drawCircle(color = Color.White, radius = dotR * 0.4f, center = Offset(cx, cy))
       } else {
@@ -239,10 +223,10 @@ fun PixelBoardCanvas(
       )
     }
 
-    // 7. Snake tail
+    // 7. Snake tail (circles by spec or squares)
     val snake = gameState.snake
     val isGhostMode = gameState.activeEffect == PowerUpType.GHOST
-    val tailAlpha = if (isGhostMode) 0.40f else 0.86f
+    val tailAlpha = if (isGhostMode) 0.40f else 0.88f
     for (i in snake.size - 1 downTo 1) {
       val seg = snake[i]
       if (useDotPixels) {
@@ -260,7 +244,7 @@ fun PixelBoardCanvas(
       }
     }
 
-    // 8. Snake head + directional arrow
+    // 8. Snake head (#F57C00) + directional arrow
     if (snake.isNotEmpty()) {
       val head = snake[0]
       val cx = originX + head.x * cell + cell * 0.5f

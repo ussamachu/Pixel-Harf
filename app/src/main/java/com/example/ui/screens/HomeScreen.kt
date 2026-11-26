@@ -2,7 +2,6 @@ package com.example.ui.screens
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -18,14 +17,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -51,20 +51,18 @@ import com.example.model.LevelProgress
 import com.example.model.UserSettings
 import com.example.ui.Dimens
 import com.example.ui.components.CircleButton
-import com.example.ui.components.DotDigitText
-import com.example.ui.components.DotIcon
-import com.example.ui.components.DotIconType
-import com.example.ui.components.DotRing
-import com.example.ui.components.DotStarRow
 import com.example.ui.components.DotText
+import com.example.ui.components.FlatCard
+import com.example.ui.components.HairlineDivider
+import com.example.ui.components.PixelIcon
 import com.example.ui.components.UiAppearanceState
-import com.example.ui.components.WidgetCard
 import com.example.ui.components.widgetStaggerEntrance
 import com.example.ui.theme.AmiriFamily
-import com.example.ui.theme.DotoFontFamily
-import com.example.ui.theme.LocalNothingPalette
+import com.example.ui.theme.AppShapes
+import com.example.ui.theme.IconTint
+import com.example.ui.theme.JetBrainsMonoFamily
+import com.example.ui.theme.LocalPalette
 import com.example.ui.theme.LocalReduceMotion
-import com.example.ui.theme.WidgetRadius
 import kotlinx.coroutines.delay
 
 @Composable
@@ -80,7 +78,7 @@ fun HomeScreen(
   onToggleSound: () -> Unit,
   onSelectMode: (GameMode) -> Unit,
 ) {
-  val palette = LocalNothingPalette.current
+  val palette = LocalPalette.current
   val reduceMotion = LocalReduceMotion.current
   val dailySpec = remember { LevelCatalog.dailyChallenge() }
   val todayDone = progress.dailyCompletedDate == LevelCatalog.todayKey()
@@ -118,22 +116,6 @@ fun HomeScreen(
       GameMode.HARD -> strings.modeHard
     }
 
-  var arrowTick by remember { mutableIntStateOf(0) }
-  LaunchedEffect(reduceMotion) {
-    if (!reduceMotion) {
-      while (true) {
-        delay(700L)
-        arrowTick = (arrowTick + 1) % 3
-      }
-    }
-  }
-  val arrowShift by
-    animateFloatAsState(
-      targetValue = if (arrowTick == 1) 4f else 0f,
-      animationSpec = tween(220),
-      label = "play_arrow_shift",
-    )
-
   Box(
     modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding(),
     contentAlignment = Alignment.TopCenter,
@@ -143,49 +125,21 @@ fun HomeScreen(
         Modifier.widthIn(max = 540.dp)
           .fillMaxSize()
           .verticalScroll(rememberScrollState())
-          .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceMd),
+          .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceLg),
       verticalArrangement = Arrangement.SpaceBetween,
-      horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-      // 1. Top Header: Small DotText logo (max 28sp) + horizontal Mode pill + 1-line subtitle
+      // 1. Pixel wordmark (single DotText on Home) + one-line subtitle
       Column(
         modifier = Modifier.fillMaxWidth().widgetStaggerEntrance(0),
         verticalArrangement = Arrangement.spacedBy(Dimens.SpaceXs),
       ) {
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.SpaceBetween,
-          verticalAlignment = Alignment.CenterVertically,
-        ) {
-          // Single DotText seasoning on Home (<= 28sp height)
-          DotText(
-            text = strings.appTitle,
-            fontResId = R.font.noto_kufi_arabic,
-            dotSize = Dimens.DotTitleDotSize,
-            color = palette.ink,
-            targetRows = 14,
-          )
-          // Horizontal Mode pill — never wraps or stacks vertically
-          WidgetCard(
-            shape = WidgetRadius.Pill,
-            cornerRadiusDp = 24.dp,
-            hapticsEnabled = settings.hapticsEnabled,
-            onClick = { showModesPanel = !showModesPanel },
-            modifier = Modifier.testTag("mode_pill_button"),
-          ) {
-            Text(
-              text = strings.modePillLabel(activeModeLabel),
-              style = MaterialTheme.typography.bodyMedium,
-              fontSize = Dimens.CaptionSp,
-              fontWeight = FontWeight.SemiBold,
-              color = palette.ink,
-              maxLines = 1,
-              softWrap = false,
-              overflow = TextOverflow.Ellipsis,
-              modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-            )
-          }
-        }
+        DotText(
+          text = strings.appTitle,
+          fontResId = R.font.noto_kufi_arabic,
+          dotSize = Dimens.DotWordmarkSize,
+          color = palette.ink,
+          targetRows = 14,
+        )
         Text(
           text = strings.appSubtitle,
           style = MaterialTheme.typography.bodyLarge,
@@ -196,152 +150,252 @@ fun HomeScreen(
         )
       }
 
-      // 2. Centered Today's Letter Circle Card (Daily Challenge)
-      WidgetCard(
+      Spacer(modifier = Modifier.height(Dimens.SpaceXl))
+
+      // 2. Today's Letter as a large flat card (8dp radius, 1dp hairline border; tap = daily)
+      FlatCard(
         modifier =
-          Modifier.size(Dimens.DailyCircleSize)
+          Modifier.fillMaxWidth()
+            .weight(1f, fill = true)
             .widgetStaggerEntrance(1)
             .testTag("daily_button"),
-        shape = WidgetRadius.Circle,
-        cornerRadiusDp = Dimens.DailyCircleSize / 2,
+        shape = AppShapes.Card,
         hapticsEnabled = settings.hapticsEnabled,
         onClick = onPlayDaily,
       ) {
         Column(
-          modifier = Modifier.fillMaxSize().padding(Dimens.SpaceMd),
+          modifier = Modifier.fillMaxSize().padding(Dimens.SpaceLg),
           horizontalAlignment = Alignment.CenterHorizontally,
           verticalArrangement = Arrangement.SpaceBetween,
         ) {
           Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
           ) {
-            DotIcon(
-              type = if (todayDone) DotIconType.CHECK else DotIconType.DAILY,
-              dotSize = 1.4.dp,
-              color = palette.mutedInk,
-            )
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+            ) {
+              PixelIcon(
+                type = if (todayDone) PixelIcon.CHECK else PixelIcon.DAILY,
+                size = 16.dp,
+                isSuccess = todayDone,
+              )
+              Text(
+                text = strings.dailyChallenge,
+                style = MaterialTheme.typography.bodyLarge,
+                fontSize = Dimens.BodySp,
+                fontWeight = FontWeight.SemiBold,
+                color = palette.ink,
+              )
+            }
             Text(
-              text = strings.dailyChallenge,
+              text =
+                if (todayDone) strings.dailyCompleted
+                else if (progress.dailyStreak > 0) strings.dailyStreak(progress.dailyStreak)
+                else dailySpec.levelSpec.fontSpec.localizedName(settings.language),
               style = MaterialTheme.typography.bodyMedium,
               fontSize = Dimens.CaptionSp,
               color = palette.mutedInk,
-              maxLines = 1,
             )
           }
 
           AnimatedContent(
             targetState = pulseLetters[pulseIdx],
-            transitionSpec = { fadeIn(tween(240)) togetherWith fadeOut(tween(180)) },
+            transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(160)) },
             label = "daily_glyph_pulse",
           ) { glyph ->
             Text(
               text = glyph,
               fontFamily = AmiriFamily,
-              fontSize = 54.sp,
+              fontSize = 84.sp,
               color = palette.ink,
             )
           }
 
           Text(
-            text =
-              if (todayDone) strings.dailyCompleted
-              else if (progress.dailyStreak > 0) strings.dailyStreak(progress.dailyStreak)
-              else dailySpec.levelSpec.fontSpec.localizedName(settings.language),
-            style = MaterialTheme.typography.bodyMedium,
-            fontSize = Dimens.CaptionSp,
-            color = palette.mutedInk,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+            text = dailySpec.levelSpec.letter.localizedName(settings.language),
+            style = MaterialTheme.typography.titleMedium,
+            fontSize = Dimens.TitleSp,
+            fontWeight = FontWeight.SemiBold,
+            color = palette.ink,
           )
         }
       }
 
-      // 3. Progress Ring Card + Stats Pill Row
-      Row(
-        modifier = Modifier.fillMaxWidth().widgetStaggerEntrance(2),
-        horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        WidgetCard(
-          modifier = Modifier.weight(1f).height(96.dp).testTag("progress_widget"),
-          shape = WidgetRadius.Card,
-          cornerRadiusDp = Dimens.CardRadius,
-          hapticsEnabled = settings.hapticsEnabled,
-          onClick = onOpenMap,
-        ) {
-          Row(
-            modifier = Modifier.fillMaxSize().padding(horizontal = Dimens.SpaceLg),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
-          ) {
-            Box(contentAlignment = Alignment.Center) {
-              DotRing(
-                progress = completionRatio,
-                size = 66.dp,
-                dotCount = 24,
-                dotSize = 2.6.dp,
-                activeColor = palette.ink,
-                inactiveColor = palette.faintDot,
-              )
-              DotDigitText(
-                value = "$completionPercent%",
-                fontSize = 14.sp,
-                color = palette.ink,
-              )
-            }
-            Text(
-              text = strings.progressLabel,
-              style = MaterialTheme.typography.bodyLarge,
-              fontSize = Dimens.BodySp,
-              fontWeight = FontWeight.SemiBold,
-              color = palette.ink,
-              maxLines = 1,
-              overflow = TextOverflow.Ellipsis,
-            )
-          }
-        }
+      Spacer(modifier = Modifier.height(Dimens.SpaceXl))
 
-        WidgetCard(
-          modifier = Modifier.weight(1f).height(96.dp),
-          shape = WidgetRadius.Card,
-          cornerRadiusDp = Dimens.CardRadius,
-        ) {
-          Column(
-            modifier = Modifier.fillMaxSize().padding(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceMd),
-            verticalArrangement = Arrangement.SpaceBetween,
+      // 3. Rows for Mode, Progress (thin orange bar), and Stars / Best score (flat hairline container)
+      FlatCard(
+        modifier = Modifier.fillMaxWidth().widgetStaggerEntrance(2),
+        shape = AppShapes.Card,
+      ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+          // Mode row
+          FlatCard(
+            modifier = Modifier.fillMaxWidth().testTag("mode_pill_button"),
+            shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp),
+            borderWidth = 0.dp,
+            borderColor = Color.Transparent,
+            hapticsEnabled = settings.hapticsEnabled,
+            onClick = { showModesPanel = !showModesPanel },
           ) {
             Row(
-              modifier = Modifier.fillMaxWidth(),
+              modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.SpaceLg, vertical = 12.dp),
               horizontalArrangement = Arrangement.SpaceBetween,
               verticalAlignment = Alignment.CenterVertically,
             ) {
-              DotStarRow(stars = 1, dotSize = 1.8.dp, spacing = 0.dp, filledColor = palette.accent)
               Text(
-                text = "$totalStars",
-                fontFamily = DotoFontFamily,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
+                text = strings.modesTitle,
+                style = MaterialTheme.typography.bodyLarge,
+                fontSize = Dimens.BodySp,
+                color = palette.mutedInk,
+              )
+              Text(
+                text = activeModeLabel,
+                style = MaterialTheme.typography.bodyLarge,
+                fontSize = Dimens.BodySp,
+                fontWeight = FontWeight.SemiBold,
                 color = palette.ink,
               )
             }
-            Row(
-              modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.SpaceBetween,
-              verticalAlignment = Alignment.CenterVertically,
+          }
+
+          AnimatedVisibility(
+            visible = showModesPanel,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically(),
+          ) {
+            Column(
+              modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceSm),
+              verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
             ) {
+              Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+              ) {
+                ModeRowOption(
+                  label = strings.modeKids,
+                  selected = settings.gameMode == GameMode.KIDS,
+                  onClick = { onSelectMode(GameMode.KIDS) },
+                  hapticsEnabled = settings.hapticsEnabled,
+                  modifier = Modifier.weight(1f).testTag("mode_kids"),
+                )
+                ModeRowOption(
+                  label = strings.modeClassic,
+                  selected = settings.gameMode == GameMode.CLASSIC,
+                  onClick = { onSelectMode(GameMode.CLASSIC) },
+                  hapticsEnabled = settings.hapticsEnabled,
+                  modifier = Modifier.weight(1f).testTag("mode_classic"),
+                )
+                ModeRowOption(
+                  label = strings.modeHard,
+                  selected = settings.gameMode == GameMode.HARD,
+                  onClick = { onSelectMode(GameMode.HARD) },
+                  hapticsEnabled = settings.hapticsEnabled,
+                  modifier = Modifier.weight(1f).testTag("mode_hard"),
+                )
+              }
+              val desc =
+                when (settings.gameMode) {
+                  GameMode.KIDS -> strings.modeKidsDesc
+                  GameMode.CLASSIC -> strings.modeClassicDesc
+                  GameMode.HARD -> strings.modeHardDesc
+                }
               Text(
-                text = strings.bestLabel,
+                text = desc,
                 style = MaterialTheme.typography.bodyMedium,
                 fontSize = Dimens.CaptionSp,
                 color = palette.mutedInk,
-                maxLines = 1,
+              )
+            }
+          }
+
+          HairlineDivider(modifier = Modifier.fillMaxWidth())
+
+          // Progress row with thin orange bar
+          Column(
+            modifier =
+              Modifier.fillMaxWidth()
+                .padding(horizontal = Dimens.SpaceLg, vertical = 12.dp)
+                .testTag("progress_widget"),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+          ) {
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.SpaceBetween,
+              verticalAlignment = Alignment.CenterVertically,
+            ) {
+              Text(
+                text = strings.progressLabel,
+                style = MaterialTheme.typography.bodyLarge,
+                fontSize = Dimens.BodySp,
+                color = palette.mutedInk,
+              )
+              Text(
+                text = "$completionPercent%  ($completedCount/$totalLevels)",
+                fontFamily = JetBrainsMonoFamily,
+                fontWeight = FontWeight.Bold,
+                fontSize = Dimens.CaptionSp,
+                color = palette.ink,
+              )
+            }
+            LinearProgressIndicator(
+              progress = { completionRatio },
+              modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
+              color = palette.accent,
+              trackColor = palette.canvas,
+            )
+          }
+
+          HairlineDivider(modifier = Modifier.fillMaxWidth())
+
+          // Stars + Best Score row
+          Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.SpaceLg, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+          ) {
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceXs),
+            ) {
+              PixelIcon(
+                type = PixelIcon.STAR,
+                size = 16.dp,
+                contentDescription = strings.starsLabel,
+              )
+              Text(
+                text = strings.starsLabel,
+                style = MaterialTheme.typography.bodyLarge,
+                fontSize = Dimens.BodySp,
+                color = palette.mutedInk,
+              )
+              Text(
+                text = "$totalStars",
+                fontFamily = JetBrainsMonoFamily,
+                fontWeight = FontWeight.Bold,
+                fontSize = Dimens.BodySp,
+                color = palette.ink,
+              )
+            }
+
+            Row(
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+            ) {
+              Text(
+                text = strings.bestLabel,
+                style = MaterialTheme.typography.bodyLarge,
+                fontSize = Dimens.BodySp,
+                color = palette.mutedInk,
               )
               Text(
                 text = "$bestOverallScore",
-                fontFamily = DotoFontFamily,
+                fontFamily = JetBrainsMonoFamily,
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
+                fontSize = Dimens.BodySp,
                 color = palette.ink,
               )
             }
@@ -349,21 +403,24 @@ fun HomeScreen(
         }
       }
 
-      // 4. Primary Orange Play Button: «العب» 20sp bold + «المستوى N» 14sp (Latin digits)
-      WidgetCard(
+      Spacer(modifier = Modifier.height(Dimens.SpaceLg))
+
+      // 4. Primary Orange Play Button «العب · المستوى N» (8dp radius, #F57C00 / pressed #E65100)
+      FlatCard(
         modifier =
           Modifier.fillMaxWidth()
             .height(Dimens.PrimaryPlayHeight)
             .widgetStaggerEntrance(3)
             .testTag("play_button"),
-        shape = WidgetRadius.Pill,
-        cornerRadiusDp = 28.dp,
+        shape = AppShapes.Button,
         backgroundColor = palette.accent,
+        pressedBackgroundColor = palette.accentPressed,
+        borderColor = palette.accent,
         hapticsEnabled = settings.hapticsEnabled,
         onClick = { onPlayContinue(progress.unlockedLevel) },
       ) {
         Row(
-          modifier = Modifier.fillMaxSize().padding(horizontal = Dimens.SpaceXl),
+          modifier = Modifier.fillMaxSize().padding(horizontal = Dimens.SpaceLg),
           verticalAlignment = Alignment.CenterVertically,
           horizontalArrangement = Arrangement.SpaceBetween,
         ) {
@@ -374,116 +431,70 @@ fun HomeScreen(
             Text(
               text = strings.playWord,
               style = MaterialTheme.typography.titleLarge,
-              fontSize = Dimens.PlayTitleSp,
+              fontSize = Dimens.TitleSp,
               fontWeight = FontWeight.Bold,
               color = Color.White,
             )
             Text(
-              text = "·  ${strings.levelBadge(progress.unlockedLevel)}",
+              text = "·",
+              fontFamily = JetBrainsMonoFamily,
+              fontWeight = FontWeight.Bold,
+              fontSize = Dimens.BodySp,
+              color = Color.White.copy(alpha = 0.85f),
+            )
+            Text(
+              text = strings.levelBadge(progress.unlockedLevel),
               style = MaterialTheme.typography.bodyLarge,
               fontSize = Dimens.BodySp,
-              color = Color.White.copy(alpha = 0.92f),
+              color = Color.White.copy(alpha = 0.94f),
             )
           }
-          DotIcon(
-            type = DotIconType.ARROW_RIGHT,
-            dotSize = 2.0.dp,
-            color = Color.White,
+          PixelIcon(
+            type = PixelIcon.ARROW_RIGHT,
+            size = 24.dp,
+            tint = IconTint.Color(Color.White),
             mirrorForRtl = true,
-            modifier = Modifier.offset(x = arrowShift.dp),
           )
         }
       }
 
-      // Inline Mode Picker (opens from Mode pill or Modes circle button)
-      AnimatedVisibility(
-        visible = showModesPanel,
-        enter = fadeIn() + expandVertically(),
-        exit = fadeOut() + shrinkVertically(),
-      ) {
-        WidgetCard(
-          modifier = Modifier.fillMaxWidth(),
-          shape = WidgetRadius.Card,
-          cornerRadiusDp = Dimens.CardRadius,
-        ) {
-          Column(
-            modifier = Modifier.fillMaxWidth().padding(Dimens.SpaceMd),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
-          ) {
-            Row(
-              modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
-            ) {
-              ModeWidgetPill(
-                label = strings.modeKids,
-                selected = settings.gameMode == GameMode.KIDS,
-                onClick = { onSelectMode(GameMode.KIDS) },
-                hapticsEnabled = settings.hapticsEnabled,
-                modifier = Modifier.weight(1f).testTag("mode_kids"),
-              )
-              ModeWidgetPill(
-                label = strings.modeClassic,
-                selected = settings.gameMode == GameMode.CLASSIC,
-                onClick = { onSelectMode(GameMode.CLASSIC) },
-                hapticsEnabled = settings.hapticsEnabled,
-                modifier = Modifier.weight(1f).testTag("mode_classic"),
-              )
-              ModeWidgetPill(
-                label = strings.modeHard,
-                selected = settings.gameMode == GameMode.HARD,
-                onClick = { onSelectMode(GameMode.HARD) },
-                hapticsEnabled = settings.hapticsEnabled,
-                modifier = Modifier.weight(1f).testTag("mode_hard"),
-              )
-            }
-            val desc =
-              when (settings.gameMode) {
-                GameMode.KIDS -> strings.modeKidsDesc
-                GameMode.CLASSIC -> strings.modeClassicDesc
-                GameMode.HARD -> strings.modeHardDesc
-              }
-            Text(
-              text = desc,
-              style = MaterialTheme.typography.bodyMedium,
-              fontSize = Dimens.CaptionSp,
-              color = palette.mutedInk,
-            )
-          }
-        }
-      }
+      Spacer(modifier = Modifier.height(Dimens.SpaceLg))
 
-      // 5. Bottom Row: 4 Consistent Circle Buttons (icon + label under each, same size)
+      HairlineDivider(modifier = Modifier.fillMaxWidth())
+
+      // 5. Bottom nav of 4 items (Map, Modes, Settings, Sound), pixel icon + label
       Row(
-        modifier = Modifier.fillMaxWidth().widgetStaggerEntrance(4),
+        modifier = Modifier.fillMaxWidth().padding(top = Dimens.SpaceMd).widgetStaggerEntrance(4),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.Top,
       ) {
-        DockCircleAction(
-          icon = DotIconType.MAP,
+        HomeNavItem(
+          icon = PixelIcon.MAP,
           label = strings.levelMap,
           onClick = onOpenMap,
           hapticsEnabled = settings.hapticsEnabled,
           modifier = Modifier.weight(1f),
           buttonTag = "map_button",
         )
-        DockCircleAction(
-          icon = DotIconType.MODES,
+        HomeNavItem(
+          icon = PixelIcon.MODES,
           label = strings.modesTitle,
+          isActive = showModesPanel,
           onClick = { showModesPanel = !showModesPanel },
           hapticsEnabled = settings.hapticsEnabled,
           modifier = Modifier.weight(1f),
           buttonTag = "modes_button",
         )
-        DockCircleAction(
-          icon = DotIconType.SETTINGS,
+        HomeNavItem(
+          icon = PixelIcon.SETTINGS,
           label = strings.settings,
           onClick = onOpenSettings,
           hapticsEnabled = settings.hapticsEnabled,
           modifier = Modifier.weight(1f),
           buttonTag = "settings_button",
         )
-        DockCircleAction(
-          icon = if (settings.soundEnabled) DotIconType.SOUND_ON else DotIconType.SOUND_OFF,
+        HomeNavItem(
+          icon = if (settings.soundEnabled) PixelIcon.SOUND_ON else PixelIcon.SOUND_OFF,
           label = strings.soundLabel,
           onClick = onToggleSound,
           hapticsEnabled = settings.hapticsEnabled,
@@ -496,15 +507,16 @@ fun HomeScreen(
 }
 
 @Composable
-private fun DockCircleAction(
-  icon: DotIconType,
+private fun HomeNavItem(
+  icon: PixelIcon,
   label: String,
   onClick: () -> Unit,
   hapticsEnabled: Boolean,
   buttonTag: String,
   modifier: Modifier = Modifier,
+  isActive: Boolean = false,
 ) {
-  val palette = LocalNothingPalette.current
+  val palette = LocalPalette.current
   Column(
     modifier = modifier,
     horizontalAlignment = Alignment.CenterHorizontally,
@@ -515,7 +527,8 @@ private fun DockCircleAction(
       contentDescription = label,
       onClick = onClick,
       size = Dimens.CircleButtonSize,
-      dotSize = 2.2.dp,
+      iconSize = 24.dp,
+      isActive = isActive,
       hapticsEnabled = hapticsEnabled,
       modifier = Modifier.testTag(buttonTag),
     )
@@ -531,19 +544,20 @@ private fun DockCircleAction(
 }
 
 @Composable
-private fun ModeWidgetPill(
+private fun ModeRowOption(
   label: String,
   selected: Boolean,
   onClick: () -> Unit,
   hapticsEnabled: Boolean,
   modifier: Modifier = Modifier,
 ) {
-  val palette = LocalNothingPalette.current
-  WidgetCard(
+  val palette = LocalPalette.current
+  FlatCard(
     modifier = modifier.height(Dimens.ButtonHeight),
-    shape = WidgetRadius.Pill,
-    cornerRadiusDp = 24.dp,
-    backgroundColor = if (selected) palette.ink else palette.widgetPressed,
+    shape = AppShapes.Button,
+    backgroundColor = if (selected) palette.accent else palette.canvas,
+    pressedBackgroundColor = if (selected) palette.accentPressed else palette.surfacePressed,
+    borderColor = if (selected) palette.accent else palette.hairline,
     hapticsEnabled = hapticsEnabled,
     onClick = onClick,
   ) {
@@ -552,7 +566,7 @@ private fun ModeWidgetPill(
         text = label,
         style = MaterialTheme.typography.labelLarge,
         fontSize = Dimens.BodySp,
-        color = if (selected) palette.widgetSurface else palette.ink,
+        color = if (selected) Color.White else palette.ink,
         maxLines = 1,
       )
     }

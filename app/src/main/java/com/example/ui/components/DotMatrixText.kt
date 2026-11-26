@@ -12,41 +12,29 @@ import androidx.annotation.FontRes
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.content.res.ResourcesCompat
 import com.example.R
-import com.example.ui.theme.LocalNothingPalette
+import com.example.ui.theme.LocalPalette
 import com.example.ui.theme.LocalReduceMotion
-import kotlin.math.PI
-import kotlin.math.cos
 import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.sin
 
 class DotGridRaster(
   val cols: Int,
   val rows: Int,
-  // Packed x, y coordinates: x = packed[i * 2], y = packed[i * 2 + 1]
   val packedCoords: IntArray,
-) {
-  val dotCount: Int get() = packedCoords.size / 2
-}
+)
 
 private object DotRasterCache {
   private val cache = LruCache<String, DotGridRaster>(180)
@@ -133,19 +121,16 @@ private object DotRasterCache {
 }
 
 /**
- * Reusable dot-matrix Arabic/Latin text renderer.
- * Rasterizes the given font into a cached grid and draws each "on" pixel as a round dot.
- * Zero allocations inside Canvas draw lambda.
+ * Arabic pixel/dot-matrix lettering composable (used sparingly: max 1 per screen).
  */
 @Composable
 fun DotText(
   text: String,
   modifier: Modifier = Modifier,
   @FontRes fontResId: Int = R.font.noto_kufi_arabic,
-  dotSize: Dp = 2.6.dp,
-  color: Color = LocalNothingPalette.current.ink,
-  targetRows: Int = 18,
-  outlineOnly: Boolean = false,
+  dotSize: Dp = 2.0.dp,
+  color: Color = LocalPalette.current.ink,
+  targetRows: Int = 15,
   animateScanIn: Boolean = false,
   scanKey: Any? = text,
 ) {
@@ -164,13 +149,13 @@ fun DotText(
   LaunchedEffect(scanKey, animateScanIn, reduceMotion) {
     if (animateScanIn && !reduceMotion) {
       scanAnim.snapTo(0f)
-      scanAnim.animateTo(1f, animationSpec = tween(durationMillis = 260))
+      scanAnim.animateTo(1f, animationSpec = tween(durationMillis = 240))
     } else {
       scanAnim.snapTo(1f)
     }
   }
 
-  val pitchRatio = 1.38f
+  val pitchRatio = 1.35f
   val widthDp = dotSize * (raster.cols * pitchRatio)
   val heightDp = dotSize * (raster.rows * pitchRatio)
 
@@ -190,379 +175,14 @@ fun DotText(
       val gx = coords[i]
       val gy = coords[i + 1]
       if (!animateScanIn || gy <= visibleMaxRow) {
-        val cx = gx * pitch + pitch * 0.5f
-        val cy = gy * pitch + pitch * 0.5f
-        if (outlineOnly) {
-          if ((gx + gy) % 2 == 0) {
-            drawCircle(
-              color = color,
-              radius = radius * 0.72f,
-              center = Offset(cx, cy),
-            )
-          }
-        } else {
-          drawCircle(
-            color = color,
-            radius = radius,
-            center = Offset(cx, cy),
-          )
-        }
+        drawCircle(
+          color = color,
+          radius = radius,
+          center = Offset(gx * pitch + pitch * 0.5f, gy * pitch + pitch * 0.5f),
+        )
       }
       i += 2
     }
   }
 }
 
-enum class DotIconType {
-  MAP,
-  MODES,
-  SETTINGS,
-  SOUND_ON,
-  SOUND_OFF,
-  PAUSE,
-  PLAY,
-  BACK,
-  ARROW_RIGHT,
-  ARROW_LEFT,
-  LOCK,
-  SLOW_MO,
-  MAGNET,
-  GHOST,
-  SHRINK,
-  HEART,
-  DAILY,
-  CHECK,
-}
-
-private object DotIconBitmaps {
-  // 7x7 crisp pixel-dot bitmasks
-  private val grids: Map<DotIconType, Array<String>> =
-    mapOf(
-      DotIconType.PLAY to
-        arrayOf(
-          ".#.....",
-          ".##....",
-          ".###...",
-          ".####..",
-          ".###...",
-          ".##....",
-          ".#.....",
-        ),
-      DotIconType.PAUSE to
-        arrayOf(
-          ".##.##.",
-          ".##.##.",
-          ".##.##.",
-          ".##.##.",
-          ".##.##.",
-          ".##.##.",
-          ".##.##.",
-        ),
-      DotIconType.ARROW_RIGHT to
-        arrayOf(
-          "...#...",
-          "....#..",
-          ".....#.",
-          "#######",
-          ".....#.",
-          "....#..",
-          "...#...",
-        ),
-      DotIconType.ARROW_LEFT to
-        arrayOf(
-          "...#...",
-          "..#....",
-          ".#.....",
-          "#######",
-          ".#.....",
-          "..#....",
-          "...#...",
-        ),
-      DotIconType.BACK to
-        arrayOf(
-          "...#...",
-          "..#....",
-          ".#.....",
-          "#######",
-          ".#.....",
-          "..#....",
-          "...#...",
-        ),
-      DotIconType.MAP to
-        arrayOf(
-          "##.##.#",
-          "##.##.#",
-          ".......",
-          "#.##.##",
-          "#.##.##",
-          ".......",
-          "##.##.#",
-        ),
-      DotIconType.MODES to
-        arrayOf(
-          "..###..",
-          ".#...#.",
-          "#..#..#",
-          "#######",
-          "#..#..#",
-          ".#...#.",
-          "..###..",
-        ),
-      DotIconType.SETTINGS to
-        arrayOf(
-          "..#.#..",
-          ".#####.",
-          "##...##",
-          "#..#..#",
-          "##...##",
-          ".#####.",
-          "..#.#..",
-        ),
-      DotIconType.SOUND_ON to
-        arrayOf(
-          "...#...",
-          "..##.#.",
-          "####..#",
-          "####..#",
-          "####..#",
-          "..##.#.",
-          "...#...",
-        ),
-      DotIconType.SOUND_OFF to
-        arrayOf(
-          "#..#...",
-          ".###...",
-          "####.#.",
-          "###.#..",
-          "####.#.",
-          "..##..#",
-          "...#...",
-        ),
-      DotIconType.LOCK to
-        arrayOf(
-          "..###..",
-          ".#...#.",
-          ".#...#.",
-          "#######",
-          "###.###",
-          "###.###",
-          "#######",
-        ),
-      DotIconType.SLOW_MO to
-        arrayOf(
-          "#######",
-          ".#...#.",
-          "..#.#..",
-          "...#...",
-          "..#.#..",
-          ".#...#.",
-          "#######",
-        ),
-      DotIconType.MAGNET to
-        arrayOf(
-          "##...##",
-          "##...##",
-          "##...##",
-          "##...##",
-          ".##.##.",
-          "..###..",
-          ".......",
-        ),
-      DotIconType.GHOST to
-        arrayOf(
-          "..###..",
-          ".#####.",
-          "##.#.##",
-          "#######",
-          "#######",
-          "#######",
-          "#.#.#.#",
-        ),
-      DotIconType.SHRINK to
-        arrayOf(
-          "#.....#",
-          ".#...#.",
-          "..#.#..",
-          ".......",
-          "..#.#..",
-          ".#...#.",
-          "#.....#",
-        ),
-      DotIconType.HEART to
-        arrayOf(
-          ".##.##.",
-          "#######",
-          "#######",
-          "#######",
-          ".#####.",
-          "..###..",
-          "...#...",
-        ),
-      DotIconType.DAILY to
-        arrayOf(
-          ".#...#.",
-          "#######",
-          "#.....#",
-          "#.###.#",
-          "#.###.#",
-          "#.....#",
-          "#######",
-        ),
-      DotIconType.CHECK to
-        arrayOf(
-          "......#",
-          ".....#.",
-          "....#..",
-          "#..#...",
-          ".##....",
-          ".......",
-          ".......",
-        ),
-    )
-
-  private val packed: Map<DotIconType, IntArray> =
-    grids.mapValues { (_, rows) ->
-      val list = ArrayList<Int>(48)
-      rows.forEachIndexed { y, row ->
-        row.forEachIndexed { x, ch ->
-          if (ch == '#') {
-            list.add(x)
-            list.add(y)
-          }
-        }
-      }
-      list.toIntArray()
-    }
-
-  fun coords(type: DotIconType): IntArray = packed[type] ?: IntArray(0)
-}
-
-@Composable
-fun DotIcon(
-  type: DotIconType,
-  modifier: Modifier = Modifier,
-  dotSize: Dp = 2.6.dp,
-  color: Color = LocalNothingPalette.current.ink,
-  mirrorForRtl: Boolean = false,
-  contentDescription: String? = null,
-) {
-  val layoutDir = LocalLayoutDirection.current
-  val mirror = mirrorForRtl && layoutDir == LayoutDirection.Rtl
-  val coords = remember(type) { DotIconBitmaps.coords(type) }
-  val pitchRatio = 1.38f
-  val total = dotSize * (7f * pitchRatio)
-
-  Canvas(
-    modifier =
-      modifier
-        .size(total)
-        .let { m ->
-          if (contentDescription != null) m.semantics { this.contentDescription = contentDescription }
-          else m
-        }
-  ) {
-    val pitch = dotSize.toPx() * pitchRatio
-    val radius = dotSize.toPx() * 0.48f
-    var i = 0
-    while (i + 1 < coords.size) {
-      val gx = if (mirror) 6 - coords[i] else coords[i]
-      val gy = coords[i + 1]
-      drawCircle(
-        color = color,
-        radius = radius,
-        center = Offset(gx * pitch + pitch * 0.5f, gy * pitch + pitch * 0.5f),
-      )
-      i += 2
-    }
-  }
-}
-
-/**
- * Thin progress ring composed of evenly spaced circular dots. Zero allocations in draw lambda.
- */
-@Composable
-fun DotRing(
-  progress: Float,
-  modifier: Modifier = Modifier,
-  size: Dp = 86.dp,
-  dotCount: Int = 28,
-  dotSize: Dp = 3.2.dp,
-  activeColor: Color = LocalNothingPalette.current.accent,
-  inactiveColor: Color = LocalNothingPalette.current.faintDot,
-) {
-  val clamped = progress.coerceIn(0f, 1f)
-  val filledDots = (clamped * dotCount).toInt()
-  val layoutDir = LocalLayoutDirection.current
-  val isRtl = layoutDir == LayoutDirection.Rtl
-
-  Canvas(modifier = modifier.size(size)) {
-    val rDot = dotSize.toPx() * 0.5f
-    val ringR = (min(this.size.width, this.size.height) * 0.5f) - rDot * 2f
-    val cx = this.size.width * 0.5f
-    val cy = this.size.height * 0.5f
-    val stepAngle = (2.0 * PI) / dotCount.toDouble()
-
-    for (i in 0 until dotCount) {
-      val dirSign = if (isRtl) -1.0 else 1.0
-      val angle = -PI * 0.5 + dirSign * i * stepAngle
-      val dx = cx + (cos(angle) * ringR).toFloat()
-      val dy = cy + (sin(angle) * ringR).toFloat()
-      val isOn = i < filledDots
-      drawCircle(
-        color = if (isOn) activeColor else inactiveColor,
-        radius = if (isOn) rDot * 1.08f else rDot * 0.85f,
-        center = Offset(dx, dy),
-      )
-    }
-  }
-}
-
-/**
- * 3 dot-matrix stars for level tiles & completion screen.
- */
-@Composable
-fun DotStarRow(
-  stars: Int,
-  modifier: Modifier = Modifier,
-  dotSize: Dp = 2.dp,
-  spacing: Dp = 4.dp,
-  filledColor: Color = LocalNothingPalette.current.accent,
-  emptyColor: Color = LocalNothingPalette.current.faintDot,
-) {
-  // 5x5 crisp dot-star mask
-  val starCoords = remember {
-    intArrayOf(
-      2, 0,
-      1, 1, 2, 1, 3, 1,
-      0, 2, 1, 2, 2, 2, 3, 2, 4, 2,
-      1, 3, 2, 3, 3, 3,
-      0, 4, 4, 4,
-    )
-  }
-  val pitchRatio = 1.32f
-  val singleSize = dotSize * (5f * pitchRatio)
-
-  Row(
-    modifier = modifier,
-    horizontalArrangement = Arrangement.spacedBy(spacing),
-    verticalAlignment = Alignment.CenterVertically,
-  ) {
-    for (idx in 1..3) {
-      val active = idx <= stars
-      Canvas(modifier = Modifier.size(singleSize)) {
-        val pitch = dotSize.toPx() * pitchRatio
-        val r = dotSize.toPx() * 0.46f
-        val c = if (active) filledColor else emptyColor
-        var i = 0
-        while (i + 1 < starCoords.size) {
-          drawCircle(
-            color = c,
-            radius = r,
-            center = Offset(starCoords[i] * pitch + pitch * 0.5f, starCoords[i + 1] * pitch + pitch * 0.5f),
-          )
-          i += 2
-        }
-      }
-    }
-  }
-}

@@ -13,18 +13,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Star
-import androidx.compose.material.icons.rounded.StarBorder
-import androidx.compose.material.icons.rounded.VolumeUp
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -42,23 +35,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.data.LevelCatalog
 import com.example.i18n.AppStrings
 import com.example.model.GameState
 import com.example.model.GameStatus
 import com.example.model.UserSettings
 import com.example.ui.Dimens
-import com.example.ui.components.DotIcon
-import com.example.ui.components.DotIconType
-import com.example.ui.components.WidgetCard
+import com.example.ui.components.DotText
+import com.example.ui.components.FlatButton
+import com.example.ui.components.FlatCard
+import com.example.ui.components.PixelIcon
 import com.example.ui.theme.AmiriFamily
-import com.example.ui.theme.DotoFontFamily
-import com.example.ui.theme.LocalNothingPalette
+import com.example.ui.theme.AppShapes
+import com.example.ui.theme.JetBrainsMonoFamily
+import com.example.ui.theme.LocalPalette
 import com.example.ui.theme.LocalReduceMotion
-import com.example.ui.theme.WidgetRadius
 import kotlinx.coroutines.delay
 import kotlin.math.cos
 import kotlin.math.sin
@@ -69,7 +63,7 @@ fun CalligraphicDissolveOverlay(
   gameState: GameState,
   settings: UserSettings,
 ) {
-  val palette = LocalNothingPalette.current
+  val palette = LocalPalette.current
   val reduceMotion = LocalReduceMotion.current
 
   val visible =
@@ -79,7 +73,7 @@ fun CalligraphicDissolveOverlay(
   LaunchedEffect(visible, reduceMotion) {
     if (visible && !reduceMotion) {
       assembleAnim.snapTo(0f)
-      assembleAnim.animateTo(1f, animationSpec = tween(durationMillis = 720))
+      assembleAnim.animateTo(1f, animationSpec = tween(durationMillis = 700))
     } else if (visible) {
       assembleAnim.snapTo(1f)
     }
@@ -87,24 +81,24 @@ fun CalligraphicDissolveOverlay(
 
   val dotVectors = remember {
     val rnd = Random(77)
-    FloatArray(48) { idx ->
+    FloatArray(44) { idx ->
       if (idx % 2 == 0) rnd.nextFloat() * 6.283f else 0.35f + rnd.nextFloat() * 0.65f
     }
   }
 
   AnimatedVisibility(
     visible = visible,
-    enter = fadeIn(tween(150)),
-    exit = fadeOut(tween(180)),
+    enter = fadeIn(tween(140)),
+    exit = fadeOut(tween(160)),
   ) {
     Box(
-      modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.35f)),
+      modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.40f)),
       contentAlignment = Alignment.Center,
     ) {
-      WidgetCard(
+      FlatCard(
         modifier = Modifier.padding(Dimens.SpaceLg),
-        shape = WidgetRadius.Card,
-        cornerRadiusDp = Dimens.DialogRadius,
+        shape = AppShapes.Dialog,
+        backgroundColor = palette.canvas,
       ) {
         Box(
           modifier = Modifier.padding(horizontal = 36.dp, vertical = 24.dp),
@@ -113,7 +107,7 @@ fun CalligraphicDissolveOverlay(
           val t = assembleAnim.value
           val dotAlpha = (1f - t).coerceIn(0f, 1f)
           if (dotAlpha > 0.02f) {
-            Canvas(modifier = Modifier.size(140.dp)) {
+            Canvas(modifier = Modifier.size(136.dp)) {
               val cx = size.width * 0.5f
               val cy = size.height * 0.5f
               val maxSpread = size.minDimension * 0.45f
@@ -125,7 +119,7 @@ fun CalligraphicDissolveOverlay(
                 val y = cy + sin(angle) * dist
                 drawCircle(
                   color = (if (i % 4 == 0) palette.accent else palette.ink).copy(alpha = dotAlpha),
-                  radius = 3.5.dp.toPx(),
+                  radius = 3.dp.toPx(),
                   center = Offset(x, y),
                 )
                 i += 2
@@ -140,12 +134,13 @@ fun CalligraphicDissolveOverlay(
             Text(
               text = gameState.levelSpec.letter.isolatedGlyph,
               fontFamily = AmiriFamily,
-              fontSize = 84.sp,
+              fontSize = 82.sp,
               color = palette.ink,
             )
             Text(
               text = gameState.levelSpec.letter.localizedName(settings.language),
               style = MaterialTheme.typography.titleLarge,
+              fontSize = Dimens.TitleSp,
               color = palette.accent,
             )
           }
@@ -165,7 +160,7 @@ fun LevelCompleteOverlay(
   onOpenMap: () -> Unit,
   onReplayLetterAudio: (String) -> Unit,
 ) {
-  val palette = LocalNothingPalette.current
+  val palette = LocalPalette.current
   val reduceMotion = LocalReduceMotion.current
   val visible =
     gameState.status == GameStatus.LEVEL_COMPLETE && !gameState.calligraphicRevealActive
@@ -180,7 +175,7 @@ fun LevelCompleteOverlay(
       } else {
         revealedStars = 0
         for (s in 1..gameState.starsEarned) {
-          delay(190L)
+          delay(180L)
           revealedStars = s
         }
       }
@@ -189,51 +184,50 @@ fun LevelCompleteOverlay(
 
   AnimatedVisibility(
     visible = visible,
-    enter = fadeIn(tween(180)),
+    enter = fadeIn(tween(160)),
     exit = fadeOut(tween(140)),
   ) {
     Box(
       modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f)),
       contentAlignment = Alignment.Center,
     ) {
-      WidgetCard(
-        modifier = Modifier.fillMaxWidth(0.84f).widthIn(max = 360.dp),
-        shape = WidgetRadius.Card,
-        cornerRadiusDp = Dimens.DialogRadius,
+      FlatCard(
+        modifier = Modifier.fillMaxWidth(0.76f).widthIn(max = 330.dp),
+        shape = AppShapes.Dialog,
+        backgroundColor = palette.canvas,
       ) {
         Column(
           modifier = Modifier.padding(Dimens.SpaceLg),
           horizontalAlignment = Alignment.CenterHorizontally,
           verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
         ) {
-          // Title «أحسنت!» at 28sp + TTS audio icon
+          // Modest pixel title «أحسنت!» + audio replay icon
           Box(modifier = Modifier.fillMaxWidth()) {
-            Text(
+            DotText(
               text = strings.levelCompleteTitle,
-              style = MaterialTheme.typography.headlineMedium,
-              fontSize = 28.sp,
-              fontWeight = FontWeight.Bold,
+              fontResId = R.font.noto_kufi_arabic,
+              dotSize = 1.45.dp,
               color = palette.ink,
+              targetRows = 14,
               modifier = Modifier.align(Alignment.Center),
             )
             IconButton(
               onClick = { onReplayLetterAudio(gameState.levelSpec.letter.nameAr) },
               modifier = Modifier.align(Alignment.CenterEnd).minimumInteractiveComponentSize(),
             ) {
-              Icon(
-                imageVector = Icons.Rounded.VolumeUp,
+              PixelIcon(
+                type = PixelIcon.VOLUME,
+                size = 24.dp,
                 contentDescription = strings.settingsTts,
-                tint = palette.ink,
               )
             }
           }
 
-          // Letter + Name
           Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
               text = gameState.levelSpec.letter.isolatedGlyph,
               fontFamily = AmiriFamily,
-              fontSize = 56.sp,
+              fontSize = 54.sp,
               color = palette.ink,
             )
             Text(
@@ -244,33 +238,29 @@ fun LevelCompleteOverlay(
             )
           }
 
-          // 3 Orange Filled Stars
           Row(horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)) {
             for (i in 1..3) {
               val filled = i <= revealedStars
-              Icon(
-                imageVector = if (filled) Icons.Rounded.Star else Icons.Rounded.StarBorder,
+              PixelIcon(
+                type = if (filled) PixelIcon.STAR else PixelIcon.STAR_OUTLINE,
+                size = 32.dp,
                 contentDescription = null,
-                tint = if (filled) palette.accent else palette.faintDot,
-                modifier = Modifier.size(34.dp),
               )
             }
           }
 
-          // Score
           Text(
             text = "${strings.scoreLabel}  ${gameState.score}",
-            fontFamily = DotoFontFamily,
+            fontFamily = JetBrainsMonoFamily,
             fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
+            fontSize = 16.sp,
             color = palette.ink,
           )
 
-          // Primary Next button + 2 secondary buttons (no scrolling)
           val hasNext =
             !gameState.isDailyChallenge && gameState.levelSpec.levelNumber < LevelCatalog.levels.size
           if (hasNext) {
-            DialogActionButton(
+            FlatButton(
               label = strings.nextLevel,
               isPrimaryOrange = true,
               hapticsEnabled = settings.hapticsEnabled,
@@ -281,16 +271,16 @@ fun LevelCompleteOverlay(
 
           Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
           ) {
-            DialogActionButton(
+            FlatButton(
               label = strings.replay,
               isPrimaryOrange = !hasNext,
               hapticsEnabled = settings.hapticsEnabled,
               onClick = onRestart,
               modifier = Modifier.weight(1f).testTag("replay_button"),
             )
-            DialogActionButton(
+            FlatButton(
               label = strings.backToMap,
               isPrimaryOrange = false,
               hapticsEnabled = settings.hapticsEnabled,
@@ -314,14 +304,13 @@ fun PausedOverlay(
   onOpenMap: () -> Unit,
   onBackHome: () -> Unit,
 ) {
-  val palette = LocalNothingPalette.current
+  val palette = LocalPalette.current
 
   AnimatedVisibility(
     visible = gameState.status == GameStatus.PAUSED,
-    enter = fadeIn(tween(150)),
-    exit = fadeOut(tween(140)),
+    enter = fadeIn(tween(140)),
+    exit = fadeOut(tween(120)),
   ) {
-    // Dim the game behind the compact dialog instead of hiding the board
     Box(
       modifier =
         Modifier.fillMaxSize()
@@ -333,48 +322,45 @@ fun PausedOverlay(
           ),
       contentAlignment = Alignment.Center,
     ) {
-      WidgetCard(
-        modifier = Modifier.fillMaxWidth(0.70f).widthIn(max = 310.dp),
-        shape = WidgetRadius.Card,
-        cornerRadiusDp = Dimens.DialogRadius,
+      FlatCard(
+        modifier = Modifier.fillMaxWidth(0.70f).widthIn(max = 300.dp),
+        shape = AppShapes.Dialog,
+        backgroundColor = palette.canvas,
       ) {
         Column(
           modifier = Modifier.padding(Dimens.SpaceLg),
           horizontalAlignment = Alignment.CenterHorizontally,
           verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
         ) {
-          // Title «متوقف» in readable font 22sp (no giant dot text)
           Text(
             text = strings.pausedTitle,
             style = MaterialTheme.typography.headlineMedium,
-            fontSize = Dimens.PauseTitleSp,
+            fontSize = Dimens.TitleSp,
             fontWeight = FontWeight.Bold,
             color = palette.ink,
           )
-
-          // 4 buttons in order: استئناف (orange), إعادة, الخريطة, الرئيسية — same width, 48dp tall, 12dp spacing
-          DialogActionButton(
+          FlatButton(
             label = strings.resume,
             isPrimaryOrange = true,
             hapticsEnabled = settings.hapticsEnabled,
             onClick = onResume,
             modifier = Modifier.fillMaxWidth().testTag("resume_button"),
           )
-          DialogActionButton(
+          FlatButton(
             label = strings.restart,
             isPrimaryOrange = false,
             hapticsEnabled = settings.hapticsEnabled,
             onClick = onRestart,
             modifier = Modifier.fillMaxWidth().testTag("pause_restart_button"),
           )
-          DialogActionButton(
+          FlatButton(
             label = strings.backToMap,
             isPrimaryOrange = false,
             hapticsEnabled = settings.hapticsEnabled,
             onClick = onOpenMap,
             modifier = Modifier.fillMaxWidth().testTag("pause_map_button"),
           )
-          DialogActionButton(
+          FlatButton(
             label = strings.backHome,
             isPrimaryOrange = false,
             hapticsEnabled = settings.hapticsEnabled,
@@ -395,21 +381,21 @@ fun GameOverOverlay(
   onRestart: () -> Unit,
   onOpenMap: () -> Unit,
 ) {
-  val palette = LocalNothingPalette.current
+  val palette = LocalPalette.current
 
   AnimatedVisibility(
     visible = gameState.status == GameStatus.GAME_OVER,
-    enter = fadeIn(tween(160)),
-    exit = fadeOut(tween(140)),
+    enter = fadeIn(tween(150)),
+    exit = fadeOut(tween(130)),
   ) {
     Box(
       modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.48f)),
       contentAlignment = Alignment.Center,
     ) {
-      WidgetCard(
-        modifier = Modifier.fillMaxWidth(0.76f).widthIn(max = 320.dp),
-        shape = WidgetRadius.Card,
-        cornerRadiusDp = Dimens.DialogRadius,
+      FlatCard(
+        modifier = Modifier.fillMaxWidth(0.70f).widthIn(max = 310.dp),
+        shape = AppShapes.Dialog,
+        backgroundColor = palette.canvas,
       ) {
         Column(
           modifier = Modifier.padding(Dimens.SpaceLg),
@@ -419,7 +405,7 @@ fun GameOverOverlay(
           Text(
             text = strings.gameOverTitle,
             style = MaterialTheme.typography.headlineMedium,
-            fontSize = Dimens.PauseTitleSp,
+            fontSize = Dimens.TitleSp,
             fontWeight = FontWeight.Bold,
             color = palette.ink,
           )
@@ -431,19 +417,19 @@ fun GameOverOverlay(
           )
           Text(
             text = "${strings.scoreLabel}  ${gameState.score}",
-            fontFamily = DotoFontFamily,
+            fontFamily = JetBrainsMonoFamily,
             fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
+            fontSize = 18.sp,
             color = palette.ink,
           )
-          DialogActionButton(
+          FlatButton(
             label = strings.restart,
             isPrimaryOrange = true,
             hapticsEnabled = settings.hapticsEnabled,
             onClick = onRestart,
             modifier = Modifier.fillMaxWidth().testTag("retry_button"),
           )
-          DialogActionButton(
+          FlatButton(
             label = strings.backToMap,
             isPrimaryOrange = false,
             hapticsEnabled = settings.hapticsEnabled,
@@ -456,9 +442,6 @@ fun GameOverOverlay(
   }
 }
 
-/**
- * One-time dismissible coachmark on first game pointing to Pause & Power-ups.
- */
 @Composable
 fun GameCoachmarkOverlay(
   visible: Boolean,
@@ -466,17 +449,17 @@ fun GameCoachmarkOverlay(
   hapticsEnabled: Boolean,
   onDismiss: () -> Unit,
 ) {
-  val palette = LocalNothingPalette.current
+  val palette = LocalPalette.current
 
   AnimatedVisibility(
     visible = visible,
-    enter = fadeIn(tween(180)),
-    exit = fadeOut(tween(150)),
+    enter = fadeIn(tween(160)),
+    exit = fadeOut(tween(140)),
   ) {
     Box(
       modifier =
         Modifier.fillMaxSize()
-          .background(Color.Black.copy(alpha = 0.55f))
+          .background(Color.Black.copy(alpha = 0.50f))
           .clickable(
             interactionSource = remember { MutableInteractionSource() },
             indication = null,
@@ -484,90 +467,57 @@ fun GameCoachmarkOverlay(
           )
           .padding(Dimens.ScreenPadding),
     ) {
-      Column(
-        modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(bottom = 88.dp),
-        verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
-        horizontalAlignment = Alignment.CenterHorizontally,
+      FlatCard(
+        modifier =
+          Modifier.align(Alignment.BottomCenter)
+            .padding(bottom = 84.dp)
+            .fillMaxWidth()
+            .widthIn(max = 360.dp),
+        shape = AppShapes.Dialog,
+        backgroundColor = palette.canvas,
       ) {
-        WidgetCard(
-          modifier = Modifier.fillMaxWidth().widthIn(max = 360.dp),
-          shape = WidgetRadius.Card,
-          cornerRadiusDp = Dimens.DialogRadius,
+        Column(
+          modifier = Modifier.padding(Dimens.SpaceLg),
+          verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+          horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-          Column(
-            modifier = Modifier.padding(Dimens.SpaceLg),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
-            horizontalAlignment = Alignment.CenterHorizontally,
+          Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
           ) {
-            Row(
-              modifier = Modifier.fillMaxWidth(),
-              verticalAlignment = Alignment.CenterVertically,
-              horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
-            ) {
-              DotIcon(type = DotIconType.PAUSE, dotSize = 2.0.dp, color = palette.accent)
-              Text(
-                text = strings.coachmarkPauseTitle,
-                style = MaterialTheme.typography.bodyLarge,
-                fontSize = Dimens.BodySp,
-                color = palette.ink,
-                modifier = Modifier.weight(1f),
-              )
-            }
-            Row(
-              modifier = Modifier.fillMaxWidth(),
-              verticalAlignment = Alignment.CenterVertically,
-              horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
-            ) {
-              DotIcon(type = DotIconType.SLOW_MO, dotSize = 2.0.dp, color = palette.accent)
-              Text(
-                text = strings.coachmarkPowerUpDesc,
-                style = MaterialTheme.typography.bodyLarge,
-                fontSize = Dimens.BodySp,
-                color = palette.ink,
-                modifier = Modifier.weight(1f),
-              )
-            }
-            DialogActionButton(
-              label = strings.coachmarkDismiss,
-              isPrimaryOrange = true,
-              hapticsEnabled = hapticsEnabled,
-              onClick = onDismiss,
-              modifier = Modifier.fillMaxWidth().testTag("coachmark_dismiss_button"),
+            PixelIcon(type = PixelIcon.PAUSE, size = 24.dp)
+            Text(
+              text = strings.coachmarkPauseTitle,
+              style = MaterialTheme.typography.bodyLarge,
+              fontSize = Dimens.BodySp,
+              color = palette.ink,
+              modifier = Modifier.weight(1f),
             )
           }
+          Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+          ) {
+            PixelIcon(type = PixelIcon.SLOW_MO, size = 24.dp)
+            Text(
+              text = strings.coachmarkPowerUpDesc,
+              style = MaterialTheme.typography.bodyLarge,
+              fontSize = Dimens.BodySp,
+              color = palette.ink,
+              modifier = Modifier.weight(1f),
+            )
+          }
+          FlatButton(
+            label = strings.coachmarkDismiss,
+            isPrimaryOrange = true,
+            hapticsEnabled = hapticsEnabled,
+            onClick = onDismiss,
+            modifier = Modifier.fillMaxWidth().testTag("coachmark_dismiss_button"),
+          )
         }
       }
-    }
-  }
-}
-
-@Composable
-private fun DialogActionButton(
-  label: String,
-  isPrimaryOrange: Boolean,
-  hapticsEnabled: Boolean,
-  onClick: () -> Unit,
-  modifier: Modifier = Modifier,
-) {
-  val palette = LocalNothingPalette.current
-  WidgetCard(
-    modifier = modifier.height(Dimens.ButtonHeight),
-    shape = WidgetRadius.Pill,
-    cornerRadiusDp = 24.dp,
-    backgroundColor = if (isPrimaryOrange) palette.accent else palette.widgetPressed,
-    hapticsEnabled = hapticsEnabled,
-    onClick = onClick,
-  ) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-      Text(
-        text = label,
-        style = MaterialTheme.typography.labelLarge,
-        fontSize = Dimens.ButtonSp,
-        fontWeight = FontWeight.SemiBold,
-        color = if (isPrimaryOrange) Color.White else palette.ink,
-        textAlign = TextAlign.Center,
-        maxLines = 1,
-      )
     }
   }
 }

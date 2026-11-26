@@ -8,20 +8,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.R
 
-val DotoFontFamily = FontFamily(Font(R.font.doto, FontWeight.Normal))
+val JetBrainsMonoFamily = FontFamily(Font(R.font.jetbrains_mono, FontWeight.Normal))
 val IbmPlexArabicFamily = FontFamily(Font(R.font.ibm_plex_sans_arabic, FontWeight.Normal))
 val NotoKufiFamily = FontFamily(Font(R.font.noto_kufi_arabic, FontWeight.Normal))
 val NotoNaskhFamily = FontFamily(Font(R.font.noto_naskh_arabic, FontWeight.Normal))
 val AmiriFamily = FontFamily(Font(R.font.amiri, FontWeight.Normal))
 val ReemKufiFamily = FontFamily(Font(R.font.reem_kufi, FontWeight.Normal))
 
-// Compact typography scale: buttons 18sp, body 14sp, captions 12sp. largeText scales readable copy only.
-fun buildNothingTypography(largeText: Boolean): Typography {
-  val bodyScale = if (largeText) 1.18f else 1.0f
+// Capped type scale: display 28sp, title 20sp, body 14sp, caption 12sp.
+// Arabic text always uses IBM Plex Sans Arabic / Noto Kufi; JetBrains Mono is for numbers & mono section tags.
+fun buildAppTypography(largeText: Boolean): Typography {
+  val bodyScale = if (largeText) 1.15f else 1.0f
   return Typography(
     displayLarge =
       TextStyle(
-        fontFamily = DotoFontFamily,
+        fontFamily = IbmPlexArabicFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 28.sp,
         lineHeight = 34.sp,
@@ -30,15 +31,15 @@ fun buildNothingTypography(largeText: Boolean): Typography {
       TextStyle(
         fontFamily = IbmPlexArabicFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = (22 * bodyScale).sp,
-        lineHeight = (28 * bodyScale).sp,
+        fontSize = 20.sp,
+        lineHeight = 26.sp,
       ),
     titleLarge =
       TextStyle(
         fontFamily = IbmPlexArabicFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = (18 * bodyScale).sp,
-        lineHeight = (24 * bodyScale).sp,
+        fontSize = 20.sp,
+        lineHeight = 26.sp,
       ),
     titleMedium =
       TextStyle(
@@ -70,10 +71,10 @@ fun buildNothingTypography(largeText: Boolean): Typography {
       ),
     labelSmall =
       TextStyle(
-        fontFamily = DotoFontFamily,
+        fontFamily = JetBrainsMonoFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 12.sp,
-        lineHeight = 15.sp,
+        lineHeight = 16.sp,
       ),
   )
 }

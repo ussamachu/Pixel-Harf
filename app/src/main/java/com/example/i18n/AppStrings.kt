@@ -26,6 +26,7 @@ data class AppStrings(
   val tapToStartHint: (bestScore: Int) -> String,
   val scoreLabel: String,
   val bestLabel: String,
+  val starsLabel: String,
   val comboBadge: (Int) -> String,
   val pausedTitle: String,
   val pauseAction: String,
@@ -38,11 +39,16 @@ data class AppStrings(
   val replay: String,
   val gameOverTitle: String,
   val deathReasonLabel: (DeathReason?) -> String,
+  val worldTag: (Int) -> String,
   val worldTitle: (Int) -> String,
   val worldDesc: (Int) -> String,
   val powerUpLabel: (PowerUpType) -> String,
   val tapTurnLeft: String,
   val tapTurnRight: String,
+  val sectionControlsTag: String,
+  val sectionAppearanceTag: String,
+  val sectionLanguageTag: String,
+  val sectionSoundTag: String,
   val settingsLanguage: String,
   val settingsControls: String,
   val controlSwipe: String,
@@ -54,8 +60,8 @@ data class AppStrings(
   val settingsColorblind: String,
   val settingsLargeText: String,
   val settingsPixelStyle: String,
-  val styleDots: String,
   val styleSquares: String,
+  val styleDots: String,
   val settingsDarkVariant: String,
   val settingsGlyphPulse: String,
   val progressLabel: String,
@@ -73,12 +79,12 @@ fun stringsFor(language: AppLanguage): AppStrings =
     AppLanguage.AR ->
       AppStrings(
         appTitle = "حرف بيكسل",
-        appSubtitle = "الْتَهِم نقاط الحرف العربي وأَحيِ الخط",
+        appSubtitle = "التهم مربعات الحرف العربي وأتمم الشكل",
         playWord = "العب",
         levelBadge = { lvl -> "المستوى $lvl" },
         modePillLabel = { mode -> "الوضع: $mode" },
         dailyChallenge = "تحدي اليوم",
-        dailyCompleted = "مكتمل ✓",
+        dailyCompleted = "مكتمل",
         dailyStreak = { s -> "$s أيام" },
         levelMap = "الخريطة",
         settings = "الإعدادات",
@@ -93,6 +99,7 @@ fun stringsFor(language: AppLanguage): AppStrings =
         tapToStartHint = { best -> "اضغط لتبدأ · الأسهم ← → · أفضل نتيجة $best" },
         scoreLabel = "النقاط",
         bestLabel = "الأفضل",
+        starsLabel = "النجوم",
         comboBadge = { c -> "×$c" },
         pausedTitle = "متوقف",
         pauseAction = "إيقاف",
@@ -112,13 +119,21 @@ fun stringsFor(language: AppLanguage): AppStrings =
             null -> "حاول مجدداً"
           }
         },
-        worldTitle = { w -> "العالم $w" },
+        worldTag = { w -> "WORLD $w" },
+        worldTitle = { w ->
+          when (w) {
+            1 -> "الحروف البسيطة"
+            2 -> "الحروف المتوسطة"
+            3 -> "الحروف المركبة"
+            else -> "الإتقان والأشكال"
+          }
+        },
         worldDesc = { w ->
           when (w) {
-            1 -> "الحروف البسيطة · جدران ملتفة"
-            2 -> "الحروف المتوسطة · النقاط تمنح مكافأة"
-            3 -> "الحروف المركبة · اصطدام الذيل مفعل"
-            else -> "الإتقان والأشكال · خطوط متنوعة وشبح متحرك"
+            1 -> "جدران ملتفة · بدون اصطدام بالذيل"
+            2 -> "جدران صلبة · النقاط تمنح مكافأة"
+            3 -> "اصطدام الذيل مفعل · دقة أعلى"
+            else -> "خطوط متنوعة · أشكال متصلة · شبح متحرك"
           }
         },
         powerUpLabel = { p ->
@@ -131,22 +146,26 @@ fun stringsFor(language: AppLanguage): AppStrings =
         },
         tapTurnLeft = "يسار",
         tapTurnRight = "يمين",
+        sectionControlsTag = "CONTROLS",
+        sectionAppearanceTag = "APPEARANCE",
+        sectionLanguageTag = "LANGUAGE",
+        sectionSoundTag = "SOUND",
         settingsLanguage = "اللغة",
-        settingsControls = "التحكم",
+        settingsControls = "التحكم واللعب",
         controlSwipe = "سحب باللمس",
         controlTapZones = "زران يمين / يسار",
-        settingsMode = "مستوى اللعب",
+        settingsMode = "مستوى الصعوبة",
         settingsSound = "مؤثرات 8-بت الصوتية",
         settingsHaptics = "الاهتزاز",
         settingsTts = "نطق الحرف بعد الفوز",
         settingsColorblind = "ألوان وأشكال لعمى الألوان",
         settingsLargeText = "تكبير النص المقروء",
-        settingsPixelStyle = "شكل النقاط في اللعب",
-        styleDots = "نقاط دائرية",
+        settingsPixelStyle = "نمط الرسم",
         styleSquares = "مربعات",
+        styleDots = "نقاط",
         settingsDarkVariant = "المظهر الداكن",
         settingsGlyphPulse = "نبض الحروف في الرئيسية",
-        progressLabel = "الإنجاز",
+        progressLabel = "التقدم",
         soundLabel = "الصوت",
         levelNumLabel = { n -> "$n" },
         starsTotal = { earned, total -> "$earned/$total" },
@@ -158,18 +177,18 @@ fun stringsFor(language: AppLanguage): AppStrings =
     AppLanguage.EN ->
       AppStrings(
         appTitle = "Pixel Harf",
-        appSubtitle = "Eat every dot of the Arabic letter",
+        appSubtitle = "Eat every pixel of the Arabic letter",
         playWord = "Play",
         levelBadge = { lvl -> "Level $lvl" },
         modePillLabel = { mode -> "Mode: $mode" },
         dailyChallenge = "Daily",
-        dailyCompleted = "Done ✓",
+        dailyCompleted = "Done",
         dailyStreak = { s -> "${s}d" },
         levelMap = "Map",
         settings = "Settings",
         modesTitle = "Modes",
         modeKids = "Kids",
-        modeKidsDesc = "No death · gentle pace · next-dot hints",
+        modeKidsDesc = "No death · gentle pace · next-pixel hints",
         modeClassic = "Classic",
         modeClassicDesc = "Balanced progression & 3-star mastery",
         modeHard = "Hard",
@@ -178,6 +197,7 @@ fun stringsFor(language: AppLanguage): AppStrings =
         tapToStartHint = { best -> "Tap to start · Arrows ← → · Best $best" },
         scoreLabel = "SCORE",
         bestLabel = "BEST",
+        starsLabel = "STARS",
         comboBadge = { c -> "x$c" },
         pausedTitle = "Paused",
         pauseAction = "Pause",
@@ -197,13 +217,21 @@ fun stringsFor(language: AppLanguage): AppStrings =
             null -> "Try again"
           }
         },
-        worldTitle = { w -> "World $w" },
+        worldTag = { w -> "WORLD $w" },
+        worldTitle = { w ->
+          when (w) {
+            1 -> "Simple Shapes"
+            2 -> "Medium Letters"
+            3 -> "Complex Letters"
+            else -> "Master Forms"
+          }
+        },
         worldDesc = { w ->
           when (w) {
-            1 -> "Simple shapes · wrapping borders"
-            2 -> "Medium letters · bonus dot targets"
-            3 -> "Complex letters · tail collision active"
-            else -> "Master forms · varied fonts & moving ghost dot"
+            1 -> "Wrapping borders · tail safe"
+            2 -> "Solid borders · bonus dot targets"
+            3 -> "Tail collision active · denser grid"
+            else -> "Varied fonts · connected forms · moving ghost"
           }
         },
         powerUpLabel = { p ->
@@ -216,8 +244,12 @@ fun stringsFor(language: AppLanguage): AppStrings =
         },
         tapTurnLeft = "Left",
         tapTurnRight = "Right",
+        sectionControlsTag = "CONTROLS",
+        sectionAppearanceTag = "APPEARANCE",
+        sectionLanguageTag = "LANGUAGE",
+        sectionSoundTag = "SOUND",
         settingsLanguage = "Language",
-        settingsControls = "Controls",
+        settingsControls = "Controls & Difficulty",
         controlSwipe = "Swipe",
         controlTapZones = "Left / Right Tap Zones",
         settingsMode = "Difficulty Mode",
@@ -226,10 +258,10 @@ fun stringsFor(language: AppLanguage): AppStrings =
         settingsTts = "Speak Letter Name (Arabic TTS)",
         settingsColorblind = "Colorblind-Safe Shapes & Palette",
         settingsLargeText = "Large Readable Text",
-        settingsPixelStyle = "In-Game Pixel Style",
-        styleDots = "Dots",
+        settingsPixelStyle = "Pixel Style",
         styleSquares = "Squares",
-        settingsDarkVariant = "Dark Gadget Theme",
+        styleDots = "Dots",
+        settingsDarkVariant = "Dark Theme",
         settingsGlyphPulse = "Home Glyph Pulse",
         progressLabel = "Progress",
         soundLabel = "Sound",
@@ -243,12 +275,12 @@ fun stringsFor(language: AppLanguage): AppStrings =
     AppLanguage.FR ->
       AppStrings(
         appTitle = "Pixel Harf",
-        appSubtitle = "Mangez chaque point de la lettre arabe",
+        appSubtitle = "Mangez chaque pixel de la lettre arabe",
         playWord = "Jouer",
         levelBadge = { lvl -> "Niveau $lvl" },
         modePillLabel = { mode -> "Mode : $mode" },
         dailyChallenge = "Défi",
-        dailyCompleted = "Fait ✓",
+        dailyCompleted = "Fait",
         dailyStreak = { s -> "${s}j" },
         levelMap = "Carte",
         settings = "Réglages",
@@ -263,6 +295,7 @@ fun stringsFor(language: AppLanguage): AppStrings =
         tapToStartHint = { best -> "Touchez pour jouer · Flèches ← → · Record $best" },
         scoreLabel = "SCORE",
         bestLabel = "RECORD",
+        starsLabel = "ÉTOILES",
         comboBadge = { c -> "x$c" },
         pausedTitle = "Pause",
         pauseAction = "Pause",
@@ -282,13 +315,21 @@ fun stringsFor(language: AppLanguage): AppStrings =
             null -> "Réessayez"
           }
         },
-        worldTitle = { w -> "Monde $w" },
+        worldTag = { w -> "WORLD $w" },
+        worldTitle = { w ->
+          when (w) {
+            1 -> "Formes Simples"
+            2 -> "Lettres Moyennes"
+            3 -> "Lettres Complexes"
+            else -> "Maître"
+          }
+        },
         worldDesc = { w ->
           when (w) {
-            1 -> "Formes simples · bords traversants"
-            2 -> "Lettres moyennes · points bonus"
-            3 -> "Lettres complexes · collision queue active"
-            else -> "Maître · polices variées & point fantôme"
+            1 -> "Bords traversants · queue sûre"
+            2 -> "Bords solides · points bonus"
+            3 -> "Collision queue active · grille fine"
+            else -> "Polices variées · formes liées · fantôme"
           }
         },
         powerUpLabel = { p ->
@@ -301,8 +342,12 @@ fun stringsFor(language: AppLanguage): AppStrings =
         },
         tapTurnLeft = "Gauche",
         tapTurnRight = "Droite",
+        sectionControlsTag = "CONTROLS",
+        sectionAppearanceTag = "APPEARANCE",
+        sectionLanguageTag = "LANGUAGE",
+        sectionSoundTag = "SOUND",
         settingsLanguage = "Langue",
-        settingsControls = "Contrôles",
+        settingsControls = "Contrôles et Mode",
         controlSwipe = "Glisser (Swipe)",
         controlTapZones = "Zones Gauche / Droite",
         settingsMode = "Mode de Jeu",
@@ -312,8 +357,8 @@ fun stringsFor(language: AppLanguage): AppStrings =
         settingsColorblind = "Palette & Formes Daltonien",
         settingsLargeText = "Grand Texte Lisible",
         settingsPixelStyle = "Style des Pixels",
-        styleDots = "Points",
         styleSquares = "Carrés",
+        styleDots = "Points",
         settingsDarkVariant = "Thème Sombre",
         settingsGlyphPulse = "Animation Glyphes Accueil",
         progressLabel = "Progrès",

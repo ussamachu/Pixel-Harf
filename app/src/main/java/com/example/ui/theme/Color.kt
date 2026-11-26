@@ -3,52 +3,112 @@ package com.example.ui.theme
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
-// Light monochrome Nothing OS palette
-val NothingBgLightTop = Color(0xFFD9DBD4)
-val NothingBgLightMid = Color(0xFFC8CBC3)
-val NothingBgLightBottom = Color(0xFFB5B8AF)
-val NothingWidgetLight = Color(0xFFEEF1E6)
-val NothingWidgetLightPressed = Color(0xFFE3E7DA)
-val NothingInnerShadowLight = Color(0x1C000000)
-val NothingInkDark = Color(0xFF1A1A1A)
-val NothingMutedLight = Color(0xFF4D5047)
-val NothingFaintDotLight = Color(0x331A1A1A)
+// Warm off-white flat palette (no blue anywhere)
+val CanvasLight = Color(0xFFFDFCFC)
+val SurfaceLight = Color(0xFFF1EEEE)
+val SurfaceLightPressed = Color(0xFFE5E0E0)
+val InkLight = Color(0xFF201D1D)
+val MutedLight = Color(0xFF5D5656)
+val HairlineLight = Color(0x1F0F0000) // rgba(15,0,0,0.12)
+val FaintInkLight = Color(0x33201D1D)
 
-// Dark monochrome Nothing OS variant
-val NothingBgDarkTop = Color(0xFF171717)
-val NothingBgDarkMid = Color(0xFF111111)
-val NothingBgDarkBottom = Color(0xFF0A0A0A)
-val NothingWidgetDark = Color(0xFF222222)
-val NothingWidgetDarkPressed = Color(0xFF2B2B2B)
-val NothingInnerShadowDark = Color(0x45000000)
-val NothingInkLight = Color(0xFFF2F3EC)
-val NothingMutedDark = Color(0xFFB4B7AD)
-val NothingFaintDotDark = Color(0x38F2F3EC)
+// Dark flat variant (#201D1D / #302C2C)
+val CanvasDark = Color(0xFF201D1D)
+val SurfaceDark = Color(0xFF302C2C)
+val SurfaceDarkPressed = Color(0xFF3D3838)
+val InkDark = Color(0xFFFDFCFC)
+val MutedDark = Color(0xFFBDB7B7)
+val HairlineDark = Color(0x29FDFCFC)
+val FaintInkDark = Color(0x3DFDFCFC)
 
-// Single gadget accent
-val NothingOrange = Color(0xFFF57C00)
-val NothingOrangeSoftLight = Color(0x26F57C00)
-val NothingOrangeSoftDark = Color(0x33F57C00)
+// Single accent color + pressed shift
+val AccentOrange = Color(0xFFF57C00)
+val AccentOrangePressed = Color(0xFFE65100)
+val AccentOrangeSoftLight = Color(0x1FF57C00)
+val AccentOrangeSoftDark = Color(0x2EF57C00)
 
-// Colorblind-safe Okabe-Ito accents (paired with distinct dot/shape geometry)
-val SafeBlue = Color(0xFF0072B2)
-val SafeCyan = Color(0xFF56B4E9)
-val SafeVermilion = Color(0xFFD55E00)
-val SafeYellow = Color(0xFFE69F00)
+// Lives heart red
+val HeartRed = Color(0xFFE53935)
+
+// Icon semantic accents (used strictly for their designated icon states)
+val SuccessGreen = Color(0xFF30D158)
+val SlowMoBlueGrayLight = Color(0xFF607D8B)
+val SlowMoBlueGrayDark = Color(0xFF90A4AE)
+val GhostVioletLight = Color(0xFF7E57C2)
+val GhostVioletDark = Color(0xFFB39DDB)
+
+// High-contrast monochrome/amber/vermilion tokens (no blue anywhere)
+val SafeAmber = Color(0xFFD98200)
+val SafeVermilion = Color(0xFFC63D00)
+
+sealed interface IconTint {
+  data object Auto : IconTint
+  data class Color(val color: androidx.compose.ui.graphics.Color) : IconTint
+}
 
 @Immutable
-data class NothingPalette(
+data class IconColors(
+  val defaultInk: Color,
+  val mutedInk: Color,
+  val disabledInk: Color,
+  val activeOrange: Color,
+  val heartFilled: Color,
+  val heartOutline: Color,
+  val starFilled: Color,
+  val starOutline: Color,
+  val successGreen: Color,
+  val powerSlowMo: Color,
+  val powerMagnet: Color,
+  val powerGhost: Color,
+  val powerShrink: Color,
+)
+
+fun lightIconColors(): IconColors =
+  IconColors(
+    defaultInk = InkLight,
+    mutedInk = MutedLight,
+    disabledInk = InkLight.copy(alpha = 0.38f),
+    activeOrange = AccentOrange,
+    heartFilled = HeartRed,
+    heartOutline = HeartRed.copy(alpha = 0.35f),
+    starFilled = AccentOrange,
+    starOutline = MutedLight.copy(alpha = 0.35f),
+    successGreen = SuccessGreen,
+    powerSlowMo = SlowMoBlueGrayLight,
+    powerMagnet = HeartRed,
+    powerGhost = GhostVioletLight,
+    powerShrink = SuccessGreen,
+  )
+
+fun darkIconColors(): IconColors =
+  IconColors(
+    defaultInk = InkDark,
+    mutedInk = MutedDark,
+    disabledInk = InkDark.copy(alpha = 0.38f),
+    activeOrange = AccentOrange,
+    heartFilled = HeartRed,
+    heartOutline = HeartRed.copy(alpha = 0.35f),
+    starFilled = AccentOrange,
+    starOutline = MutedDark.copy(alpha = 0.35f),
+    successGreen = SuccessGreen,
+    powerSlowMo = SlowMoBlueGrayDark,
+    powerMagnet = HeartRed,
+    powerGhost = GhostVioletDark,
+    powerShrink = SuccessGreen,
+  )
+
+@Immutable
+data class PixelHarfPalette(
   val isDark: Boolean,
-  val bgTop: Color,
-  val bgMid: Color,
-  val bgBottom: Color,
-  val widgetSurface: Color,
-  val widgetPressed: Color,
-  val innerShadow: Color,
+  val canvas: Color,
+  val surface: Color,
+  val surfacePressed: Color,
   val ink: Color,
   val mutedInk: Color,
-  val faintDot: Color,
+  val hairline: Color,
+  val faintInk: Color,
   val accent: Color,
+  val accentPressed: Color,
   val accentSoft: Color,
   val snakeHead: Color,
   val snakeHeadArrow: Color,
@@ -56,70 +116,43 @@ data class NothingPalette(
   val dotBonus: Color,
   val powerUp: Color,
   val ghost: Color,
-  val baselineDot: Color,
+  val baselinePixel: Color,
   val confettiAlt: Color,
   val colorblindShapes: Boolean,
+  val iconColors: IconColors,
 )
 
-fun buildNothingPalette(darkVariant: Boolean, colorblindSafe: Boolean): NothingPalette {
-  val bgTop = if (darkVariant) NothingBgDarkTop else NothingBgLightTop
-  val bgMid = if (darkVariant) NothingBgDarkMid else NothingBgLightMid
-  val bgBottom = if (darkVariant) NothingBgDarkBottom else NothingBgLightBottom
-  val widget = if (darkVariant) NothingWidgetDark else NothingWidgetLight
-  val pressed = if (darkVariant) NothingWidgetDarkPressed else NothingWidgetLightPressed
-  val innerShadow = if (darkVariant) NothingInnerShadowDark else NothingInnerShadowLight
-  val ink = if (darkVariant) NothingInkLight else NothingInkDark
-  val muted = if (darkVariant) NothingMutedDark else NothingMutedLight
-  val faint = if (darkVariant) NothingFaintDotDark else NothingFaintDotLight
-  val accentSoft = if (darkVariant) NothingOrangeSoftDark else NothingOrangeSoftLight
+fun buildPixelHarfPalette(darkVariant: Boolean, colorblindSafe: Boolean): PixelHarfPalette {
+  val canvas = if (darkVariant) CanvasDark else CanvasLight
+  val surface = if (darkVariant) SurfaceDark else SurfaceLight
+  val surfacePressed = if (darkVariant) SurfaceDarkPressed else SurfaceLightPressed
+  val ink = if (darkVariant) InkDark else InkLight
+  val muted = if (darkVariant) MutedDark else MutedLight
+  val hairline = if (darkVariant) HairlineDark else HairlineLight
+  val faint = if (darkVariant) FaintInkDark else FaintInkLight
+  val accentSoft = if (darkVariant) AccentOrangeSoftDark else AccentOrangeSoftLight
 
-  return if (colorblindSafe) {
-    NothingPalette(
-      isDark = darkVariant,
-      bgTop = bgTop,
-      bgMid = bgMid,
-      bgBottom = bgBottom,
-      widgetSurface = widget,
-      widgetPressed = pressed,
-      innerShadow = innerShadow,
-      ink = ink,
-      mutedInk = muted,
-      faintDot = faint,
-      accent = NothingOrange,
-      accentSoft = accentSoft,
-      snakeHead = SafeBlue,
-      snakeHeadArrow = Color.White,
-      snakeTail = SafeCyan,
-      dotBonus = SafeVermilion,
-      powerUp = SafeVermilion,
-      ghost = SafeYellow,
-      baselineDot = faint,
-      confettiAlt = SafeYellow,
-      colorblindShapes = true,
-    )
-  } else {
-    NothingPalette(
-      isDark = darkVariant,
-      bgTop = bgTop,
-      bgMid = bgMid,
-      bgBottom = bgBottom,
-      widgetSurface = widget,
-      widgetPressed = pressed,
-      innerShadow = innerShadow,
-      ink = ink,
-      mutedInk = muted,
-      faintDot = faint,
-      accent = NothingOrange,
-      accentSoft = accentSoft,
-      snakeHead = NothingOrange,
-      snakeHeadArrow = Color.White,
-      snakeTail = if (darkVariant) Color(0xFFBDBFB6) else Color(0xFF50524B),
-      dotBonus = ink,
-      powerUp = NothingOrange,
-      ghost = if (darkVariant) Color(0xFF9EA299) else Color(0xFF66695F),
-      baselineDot = faint,
-      confettiAlt = if (darkVariant) Color(0xFFD5D7CE) else Color(0xFF474942),
-      colorblindShapes = false,
-    )
-  }
+  return PixelHarfPalette(
+    isDark = darkVariant,
+    canvas = canvas,
+    surface = surface,
+    surfacePressed = surfacePressed,
+    ink = ink,
+    mutedInk = muted,
+    hairline = hairline,
+    faintInk = faint,
+    accent = AccentOrange,
+    accentPressed = AccentOrangePressed,
+    accentSoft = accentSoft,
+    snakeHead = AccentOrange,
+    snakeHeadArrow = Color.White,
+    snakeTail = if (darkVariant) Color(0xFFBDB7B7) else Color(0xFF4B4646),
+    dotBonus = if (colorblindSafe) SafeVermilion else ink,
+    powerUp = if (colorblindSafe) SafeAmber else AccentOrange,
+    ghost = if (colorblindSafe) SafeAmber else if (darkVariant) Color(0xFF9F9999) else Color(0xFF6B6565),
+    baselinePixel = faint,
+    confettiAlt = if (darkVariant) Color(0xFFDCD6D6) else Color(0xFF4B4646),
+    colorblindShapes = colorblindSafe,
+    iconColors = if (darkVariant) darkIconColors() else lightIconColors(),
+  )
 }

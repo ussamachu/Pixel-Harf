@@ -9,17 +9,19 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import com.example.ui.components.rememberReduceMotion
 
-val LocalNothingPalette = staticCompositionLocalOf { buildNothingPalette(darkVariant = false, colorblindSafe = false) }
+val LocalPalette = staticCompositionLocalOf { buildPixelHarfPalette(darkVariant = false, colorblindSafe = false) }
 val LocalReduceMotion = staticCompositionLocalOf { false }
+val LocalPixelIconDotMode = staticCompositionLocalOf { false }
 
 @Composable
-fun NothingTheme(
+fun PixelHarfTheme(
   darkVariant: Boolean = false,
   colorblindSafe: Boolean = false,
   largeText: Boolean = false,
+  useDotPixels: Boolean = false,
   content: @Composable () -> Unit,
 ) {
-  val palette = buildNothingPalette(darkVariant = darkVariant, colorblindSafe = colorblindSafe)
+  val palette = buildPixelHarfPalette(darkVariant = darkVariant, colorblindSafe = colorblindSafe)
   val reduceMotion = rememberReduceMotion()
 
   val colorScheme =
@@ -30,14 +32,14 @@ fun NothingTheme(
         primaryContainer = palette.accentSoft,
         onPrimaryContainer = palette.ink,
         secondary = palette.ink,
-        onSecondary = palette.widgetSurface,
-        background = palette.bgMid,
+        onSecondary = palette.surface,
+        background = palette.canvas,
         onBackground = palette.ink,
-        surface = palette.widgetSurface,
+        surface = palette.surface,
         onSurface = palette.ink,
-        surfaceVariant = palette.widgetPressed,
+        surfaceVariant = palette.surfacePressed,
         onSurfaceVariant = palette.mutedInk,
-        outline = palette.faintDot,
+        outline = palette.hairline,
       )
     } else {
       lightColorScheme(
@@ -47,24 +49,25 @@ fun NothingTheme(
         onPrimaryContainer = palette.ink,
         secondary = palette.ink,
         onSecondary = Color.White,
-        background = palette.bgMid,
+        background = palette.canvas,
         onBackground = palette.ink,
-        surface = palette.widgetSurface,
+        surface = palette.surface,
         onSurface = palette.ink,
-        surfaceVariant = palette.widgetPressed,
+        surfaceVariant = palette.surfacePressed,
         onSurfaceVariant = palette.mutedInk,
-        outline = palette.faintDot,
+        outline = palette.hairline,
       )
     }
 
   CompositionLocalProvider(
-    LocalNothingPalette provides palette,
+    LocalPalette provides palette,
     LocalReduceMotion provides reduceMotion,
+    LocalPixelIconDotMode provides useDotPixels,
   ) {
     MaterialTheme(
       colorScheme = colorScheme,
-      typography = buildNothingTypography(largeText),
-      shapes = NothingShapes,
+      typography = buildAppTypography(largeText),
+      shapes = PixelHarfShapes,
       content = content,
     )
   }

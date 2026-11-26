@@ -2,101 +2,86 @@ package com.example.ui.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.R
-import com.example.ui.theme.DotoFontFamily
-import com.example.ui.theme.LocalNothingPalette
+import com.example.ui.Dimens
+import com.example.ui.theme.AppShapes
+import com.example.ui.theme.IconTint
+import com.example.ui.theme.JetBrainsMonoFamily
+import com.example.ui.theme.LocalPalette
 import com.example.ui.theme.LocalReduceMotion
-import com.example.ui.theme.WidgetRadius
-import kotlinx.coroutines.delay
 
 /**
- * Core Nothing OS widget container: soft #EEF1E6 (or dark #222) card, large corner radius,
- * no outer border or drop shadow, subtle inner shadow, optional tactile press scale.
+ * Flat card with 1dp hairline border and zero shadows.
+ * Pressed state shifts surface color cleanly without glow or ripple.
  */
 @Composable
-fun WidgetCard(
+fun FlatCard(
   modifier: Modifier = Modifier,
-  shape: Shape = WidgetRadius.Card,
-  cornerRadiusDp: Dp = 32.dp,
-  backgroundColor: Color = LocalNothingPalette.current.widgetSurface,
+  shape: Shape = AppShapes.Card,
+  backgroundColor: Color = LocalPalette.current.surface,
+  pressedBackgroundColor: Color = LocalPalette.current.surfacePressed,
+  borderColor: Color = LocalPalette.current.hairline,
+  borderWidth: Dp = Dimens.HairlineWidth,
   hapticsEnabled: Boolean = true,
   onClick: (() -> Unit)? = null,
   content: @Composable BoxScope.() -> Unit,
 ) {
-  val palette = LocalNothingPalette.current
   val interactionSource = remember { MutableInteractionSource() }
+  val pressed =
+    if (onClick != null) rememberPressHaptic(interactionSource, hapticsEnabled) else false
+  val effectiveBg = if (pressed) pressedBackgroundColor else backgroundColor
 
   val baseModifier =
     modifier
-      .let { if (onClick != null) it.mechanicalPress(interactionSource, hapticsEnabled) else it }
       .clip(shape)
-      .background(backgroundColor)
-      .drawBehind {
-        val rPx = cornerRadiusDp.toPx().coerceAtMost(size.minDimension * 0.5f)
-        // Faint inner shadow along top/left edges for gadget display depth
-        drawRoundRect(
-          color = palette.innerShadow,
-          topLeft = Offset(1.5f, 1.5f),
-          size = Size(size.width - 3f, size.height - 3f),
-          cornerRadius = CornerRadius(rPx, rPx),
-          style = Stroke(width = 3.5f),
-        )
-      }
+      .background(effectiveBg)
+      .border(BorderStroke(borderWidth, borderColor), shape)
       .let {
         if (onClick != null) {
           it.minimumInteractiveComponentSize().clickable(
             interactionSource = interactionSource,
-            indication = ripple(bounded = true),
+            indication = null, // Surface color shift only — no glow or ripple
             onClick = onClick,
           )
         } else it
@@ -105,114 +90,82 @@ fun WidgetCard(
   Box(modifier = baseModifier, content = content)
 }
 
+/**
+ * Flat 8dp button: orange primary (#F57C00 / pressed #E65100) or neutral hairline card.
+ */
 @Composable
-fun PillButton(
+fun FlatButton(
   label: String,
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
   isPrimaryOrange: Boolean = false,
-  useDotLabel: Boolean = true,
-  showAnimatedArrow: Boolean = false,
   hapticsEnabled: Boolean = true,
-  leadingContent: (@Composable () -> Unit)? = null,
 ) {
-  val palette = LocalNothingPalette.current
-  val reduceMotion = LocalReduceMotion.current
-  val bg = if (isPrimaryOrange) palette.accent else palette.widgetSurface
+  val palette = LocalPalette.current
+  val bg = if (isPrimaryOrange) palette.accent else palette.surface
+  val bgPressed = if (isPrimaryOrange) palette.accentPressed else palette.surfacePressed
+  val border = if (isPrimaryOrange) palette.accent else palette.hairline
   val fg = if (isPrimaryOrange) Color.White else palette.ink
 
-  var arrowTick by remember { mutableIntStateOf(0) }
-  LaunchedEffect(showAnimatedArrow, reduceMotion) {
-    if (showAnimatedArrow && !reduceMotion) {
-      while (true) {
-        delay(650L)
-        arrowTick = (arrowTick + 1) % 3
-      }
-    }
-  }
-  val arrowShift by
-    animateFloatAsState(
-      targetValue = if (arrowTick == 1) 4f else 0f,
-      animationSpec = tween(220),
-      label = "pill_arrow_shift",
-    )
-
-  WidgetCard(
-    modifier = modifier.height(58.dp),
-    shape = WidgetRadius.Pill,
-    cornerRadiusDp = 30.dp,
+  FlatCard(
+    modifier = modifier.height(Dimens.ButtonHeight),
+    shape = AppShapes.Button,
     backgroundColor = bg,
+    pressedBackgroundColor = bgPressed,
+    borderColor = border,
     hapticsEnabled = hapticsEnabled,
     onClick = onClick,
   ) {
-    Row(
-      modifier = Modifier.align(Alignment.Center).padding(horizontal = 20.dp),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.Center,
-    ) {
-      if (leadingContent != null) {
-        leadingContent()
-        Spacer(modifier = Modifier.width(10.dp))
-      }
-      if (useDotLabel) {
-        DotText(
-          text = label,
-          fontResId = R.font.noto_kufi_arabic,
-          dotSize = 2.2.dp,
-          color = fg,
-          targetRows = 14,
-        )
-      } else {
-        Text(
-          text = label,
-          style = MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.Bold,
-          color = fg,
-          maxLines = 1,
-        )
-      }
-      if (showAnimatedArrow) {
-        Spacer(modifier = Modifier.width(12.dp))
-        DotIcon(
-          type = DotIconType.ARROW_RIGHT,
-          dotSize = 2.3.dp,
-          color = fg,
-          mirrorForRtl = true,
-          modifier = Modifier.offset(x = arrowShift.dp),
-        )
-      }
+    Box(modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
+      Text(
+        text = label,
+        style = MaterialTheme.typography.titleMedium,
+        fontSize = 16.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = fg,
+        textAlign = TextAlign.Center,
+        maxLines = 1,
+      )
     }
   }
 }
 
+/**
+ * Circular pixel-icon button (48dp+ touch target) with 1dp hairline and surface color shift on press.
+ */
 @Composable
 fun CircleButton(
-  iconType: DotIconType,
+  iconType: PixelIcon,
   contentDescription: String,
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
-  size: Dp = 56.dp,
-  dotSize: Dp = 2.4.dp,
+  size: Dp = Dimens.CircleButtonSize,
+  iconSize: Dp = 24.dp,
   isHighlighted: Boolean = false,
+  isActive: Boolean = false,
   mirrorForRtl: Boolean = false,
   hapticsEnabled: Boolean = true,
 ) {
-  val palette = LocalNothingPalette.current
-  val bg = if (isHighlighted) palette.accent else palette.widgetSurface
-  val fg = if (isHighlighted) Color.White else palette.ink
+  val palette = LocalPalette.current
+  val bg = if (isHighlighted) palette.accent else palette.surface
+  val bgPressed = if (isHighlighted) palette.accentPressed else palette.surfacePressed
+  val border = if (isHighlighted) palette.accent else palette.hairline
+  val tint = if (isHighlighted) IconTint.Color(Color.White) else IconTint.Auto
 
-  WidgetCard(
+  FlatCard(
     modifier = modifier.size(size),
-    shape = WidgetRadius.Circle,
-    cornerRadiusDp = size / 2,
+    shape = AppShapes.Circle,
     backgroundColor = bg,
+    pressedBackgroundColor = bgPressed,
+    borderColor = border,
     hapticsEnabled = hapticsEnabled,
     onClick = onClick,
   ) {
-    DotIcon(
+    PixelIcon(
       type = iconType,
-      dotSize = dotSize,
-      color = fg,
+      size = iconSize,
+      tint = tint,
+      isActive = isActive,
       mirrorForRtl = mirrorForRtl,
       contentDescription = contentDescription,
       modifier = Modifier.align(Alignment.Center),
@@ -221,23 +174,23 @@ fun CircleButton(
 }
 
 /**
- * Nothing OS style toggle switch: pill track, circular thumb, orange when ON.
+ * Flat hairline toggle switch with orange ON state (no glow/ripple).
  */
 @Composable
-fun NothingSwitch(
+fun FlatSwitch(
   checked: Boolean,
   onCheckedChange: (Boolean) -> Unit,
   contentDescription: String,
   modifier: Modifier = Modifier,
 ) {
-  val palette = LocalNothingPalette.current
+  val palette = LocalPalette.current
   val reduceMotion = LocalReduceMotion.current
   val interactionSource = remember { MutableInteractionSource() }
 
   val thumbOffset by
     animateDpAsState(
       targetValue = if (checked) 24.dp else 4.dp,
-      animationSpec = tween(durationMillis = if (reduceMotion) 0 else 180),
+      animationSpec = tween(durationMillis = if (reduceMotion) 0 else 150),
       label = "switch_thumb",
     )
 
@@ -245,10 +198,9 @@ fun NothingSwitch(
     modifier =
       modifier
         .minimumInteractiveComponentSize()
-        .clip(RoundedCornerShape(50))
         .clickable(
           interactionSource = interactionSource,
-          indication = ripple(bounded = false),
+          indication = null,
           role = Role.Switch,
           onClick = { onCheckedChange(!checked) },
         )
@@ -258,17 +210,22 @@ fun NothingSwitch(
   ) {
     Box(
       modifier =
-        Modifier.width(52.dp)
-          .height(30.dp)
-          .clip(RoundedCornerShape(50))
-          .background(if (checked) palette.accent else palette.faintDot),
+        Modifier.width(48.dp)
+          .height(28.dp)
+          .clip(RoundedCornerShape(8.dp))
+          .background(if (checked) palette.accent else palette.surface)
+          .border(
+            width = Dimens.HairlineWidth,
+            color = if (checked) palette.accent else palette.hairline,
+            shape = RoundedCornerShape(8.dp),
+          ),
     ) {
       Box(
         modifier =
           Modifier.align(Alignment.CenterStart)
             .offset(x = thumbOffset)
-            .size(22.dp)
-            .clip(CircleShape)
+            .size(20.dp)
+            .clip(RoundedCornerShape(4.dp))
             .background(if (checked) Color.White else palette.ink),
       )
     }
@@ -276,14 +233,15 @@ fun NothingSwitch(
 }
 
 /**
- * Animated flipping dot-matrix numeric counter using Doto font.
+ * Monospace numeric counter using JetBrains Mono (weights 400/700).
  */
 @Composable
-fun DotDigitText(
+fun MonoDigitText(
   value: String,
   modifier: Modifier = Modifier,
-  fontSize: TextUnit = 20.sp,
-  color: Color = LocalNothingPalette.current.ink,
+  fontSize: TextUnit = 16.sp,
+  fontWeight: FontWeight = FontWeight.Bold,
+  color: Color = LocalPalette.current.ink,
 ) {
   val reduceMotion = LocalReduceMotion.current
   Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
@@ -291,8 +249,8 @@ fun DotDigitText(
       if (reduceMotion) {
         Text(
           text = ch.toString(),
-          fontFamily = DotoFontFamily,
-          fontWeight = FontWeight.Bold,
+          fontFamily = JetBrainsMonoFamily,
+          fontWeight = fontWeight,
           fontSize = fontSize,
           color = color,
         )
@@ -300,15 +258,15 @@ fun DotDigitText(
         AnimatedContent(
           targetState = ch,
           transitionSpec = {
-            (slideInVertically(tween(150)) { -it / 2 } + fadeIn(tween(150))) togetherWith
-              (slideOutVertically(tween(120)) { it / 2 } + fadeOut(tween(120)))
+            (slideInVertically(tween(130)) { -it / 2 } + fadeIn(tween(130))) togetherWith
+              (slideOutVertically(tween(100)) { it / 2 } + fadeOut(tween(100)))
           },
-          label = "digit_$idx",
+          label = "mono_digit_$idx",
         ) { digit ->
           Text(
             text = digit.toString(),
-            fontFamily = DotoFontFamily,
-            fontWeight = FontWeight.Bold,
+            fontFamily = JetBrainsMonoFamily,
+            fontWeight = fontWeight,
             fontSize = fontSize,
             color = color,
           )
@@ -316,4 +274,15 @@ fun DotDigitText(
       }
     }
   }
+}
+
+@Composable
+fun HairlineDivider(modifier: Modifier = Modifier) {
+  val palette = LocalPalette.current
+  Box(
+    modifier =
+      modifier
+        .height(Dimens.HairlineWidth)
+        .background(palette.hairline),
+  )
 }

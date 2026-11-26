@@ -24,7 +24,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.example.R
 import com.example.i18n.AppStrings
 import com.example.model.AppLanguage
 import com.example.model.ControlScheme
@@ -32,14 +31,15 @@ import com.example.model.GameMode
 import com.example.model.UserSettings
 import com.example.ui.Dimens
 import com.example.ui.components.CircleButton
-import com.example.ui.components.DotIconType
-import com.example.ui.components.DotText
-import com.example.ui.components.NothingSwitch
+import com.example.ui.components.FlatCard
+import com.example.ui.components.FlatSwitch
+import com.example.ui.components.HairlineDivider
+import com.example.ui.components.PixelIcon
 import com.example.ui.components.UiAppearanceState
-import com.example.ui.components.WidgetCard
 import com.example.ui.components.widgetStaggerEntrance
-import com.example.ui.theme.LocalNothingPalette
-import com.example.ui.theme.WidgetRadius
+import com.example.ui.theme.AppShapes
+import com.example.ui.theme.JetBrainsMonoFamily
+import com.example.ui.theme.LocalPalette
 
 @Composable
 fun SettingsScreen(
@@ -59,240 +59,291 @@ fun SettingsScreen(
   onSetGlyphPulse: (Boolean) -> Unit,
   onBack: () -> Unit,
 ) {
-  val palette = LocalNothingPalette.current
+  val palette = LocalPalette.current
 
   Box(
     modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding(),
     contentAlignment = Alignment.TopCenter,
   ) {
-    Column(
-      modifier =
-        Modifier.widthIn(max = 560.dp)
-          .fillMaxSize()
-          .verticalScroll(rememberScrollState())
-          .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceMd),
-      verticalArrangement = Arrangement.spacedBy(Dimens.SpaceLg),
-    ) {
-      // Header: single DotText title (<= 28sp) + 48dp Back CircleButton
+    Column(modifier = Modifier.widthIn(max = 560.dp).fillMaxSize()) {
+      // Top bar
       Row(
-        modifier = Modifier.fillMaxWidth().height(Dimens.TopBarHeight).widgetStaggerEntrance(0),
+        modifier =
+          Modifier.fillMaxWidth()
+            .height(Dimens.TopBarHeight)
+            .padding(horizontal = Dimens.ScreenPadding)
+            .widgetStaggerEntrance(0),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
       ) {
         CircleButton(
-          iconType = DotIconType.BACK,
+          iconType = PixelIcon.BACK,
           contentDescription = strings.backHome,
           onClick = onBack,
-          size = Dimens.SmallCircleButtonSize,
-          dotSize = 2.0.dp,
+          size = Dimens.CircleButtonSize,
+          iconSize = 24.dp,
           mirrorForRtl = true,
           hapticsEnabled = settings.hapticsEnabled,
           modifier = Modifier.testTag("settings_back_button"),
         )
-        DotText(
+        Text(
           text = strings.settings,
-          fontResId = R.font.noto_kufi_arabic,
-          dotSize = Dimens.DotTitleDotSize,
+          style = MaterialTheme.typography.titleLarge,
+          fontSize = Dimens.TitleSp,
           color = palette.ink,
-          targetRows = 14,
         )
       }
 
-      SettingsGroupCard(index = 1, title = strings.settingsLanguage) {
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+      HairlineDivider(modifier = Modifier.fillMaxWidth())
+
+      Column(
+        modifier =
+          Modifier.fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceLg),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SectionGap),
+      ) {
+        // 1. CONTROLS
+        SettingsSection(
+          index = 1,
+          monoTag = strings.sectionControlsTag,
+          arabicTitle = strings.settingsControls,
         ) {
-          AppLanguage.entries.forEach { lang ->
-            SettingOptionPill(
-              label = lang.nativeLabel,
-              selected = settings.language == lang,
-              onClick = { onSetLanguage(lang) },
-              hapticsEnabled = settings.hapticsEnabled,
-              modifier = Modifier.weight(1f).testTag("lang_${lang.code}"),
+          Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd)) {
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+            ) {
+              FlatOptionButton(
+                label = strings.controlSwipe,
+                selected = settings.controlScheme == ControlScheme.SWIPE,
+                onClick = { onSetControlScheme(ControlScheme.SWIPE) },
+                hapticsEnabled = settings.hapticsEnabled,
+                modifier = Modifier.weight(1f).testTag("control_swipe"),
+              )
+              FlatOptionButton(
+                label = strings.controlTapZones,
+                selected = settings.controlScheme == ControlScheme.TAP_ZONES,
+                onClick = { onSetControlScheme(ControlScheme.TAP_ZONES) },
+                hapticsEnabled = settings.hapticsEnabled,
+                modifier = Modifier.weight(1f).testTag("control_tap_zones"),
+              )
+            }
+            HairlineDivider(modifier = Modifier.fillMaxWidth())
+            Text(
+              text = strings.settingsMode,
+              style = MaterialTheme.typography.bodyMedium,
+              fontSize = Dimens.CaptionSp,
+              color = palette.mutedInk,
+            )
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+            ) {
+              FlatOptionButton(
+                label = strings.modeKids,
+                selected = settings.gameMode == GameMode.KIDS,
+                onClick = { onSetGameMode(GameMode.KIDS) },
+                hapticsEnabled = settings.hapticsEnabled,
+                modifier = Modifier.weight(1f),
+              )
+              FlatOptionButton(
+                label = strings.modeClassic,
+                selected = settings.gameMode == GameMode.CLASSIC,
+                onClick = { onSetGameMode(GameMode.CLASSIC) },
+                hapticsEnabled = settings.hapticsEnabled,
+                modifier = Modifier.weight(1f),
+              )
+              FlatOptionButton(
+                label = strings.modeHard,
+                selected = settings.gameMode == GameMode.HARD,
+                onClick = { onSetGameMode(GameMode.HARD) },
+                hapticsEnabled = settings.hapticsEnabled,
+                modifier = Modifier.weight(1f),
+              )
+            }
+          }
+        }
+
+        // 2. APPEARANCE
+        SettingsSection(
+          index = 2,
+          monoTag = strings.sectionAppearanceTag,
+          arabicTitle = strings.settingsPixelStyle,
+        ) {
+          Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm)) {
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+            ) {
+              FlatOptionButton(
+                label = strings.styleSquares,
+                selected = !appearance.useDotPixels,
+                onClick = { onSetUseDotPixels(false) },
+                hapticsEnabled = settings.hapticsEnabled,
+                modifier = Modifier.weight(1f).testTag("style_squares"),
+              )
+              FlatOptionButton(
+                label = strings.styleDots,
+                selected = appearance.useDotPixels,
+                onClick = { onSetUseDotPixels(true) },
+                hapticsEnabled = settings.hapticsEnabled,
+                modifier = Modifier.weight(1f).testTag("style_dots"),
+              )
+            }
+            HairlineDivider(modifier = Modifier.fillMaxWidth())
+            FlatToggleRow(
+              label = strings.settingsDarkVariant,
+              checked = appearance.darkVariant,
+              onCheckedChange = onSetDarkVariant,
+              testTag = "toggle_dark_variant",
+            )
+            HairlineDivider(modifier = Modifier.fillMaxWidth())
+            FlatToggleRow(
+              label = strings.settingsGlyphPulse,
+              checked = appearance.glyphPulseEnabled,
+              onCheckedChange = onSetGlyphPulse,
+              testTag = "toggle_glyph_pulse",
+            )
+            HairlineDivider(modifier = Modifier.fillMaxWidth())
+            FlatToggleRow(
+              label = strings.settingsColorblind,
+              checked = settings.colorblindSafe,
+              onCheckedChange = onSetColorblind,
+              testTag = "toggle_colorblind",
+            )
+            HairlineDivider(modifier = Modifier.fillMaxWidth())
+            FlatToggleRow(
+              label = strings.settingsLargeText,
+              checked = settings.largeText,
+              onCheckedChange = onSetLargeText,
+              testTag = "toggle_large_text",
             )
           }
         }
-      }
 
-      SettingsGroupCard(index = 2, title = strings.settingsPixelStyle) {
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+        // 3. LANGUAGE
+        SettingsSection(
+          index = 3,
+          monoTag = strings.sectionLanguageTag,
+          arabicTitle = strings.settingsLanguage,
         ) {
-          SettingOptionPill(
-            label = strings.styleDots,
-            selected = appearance.useDotPixels,
-            onClick = { onSetUseDotPixels(true) },
-            hapticsEnabled = settings.hapticsEnabled,
-            modifier = Modifier.weight(1f).testTag("style_dots"),
-          )
-          SettingOptionPill(
-            label = strings.styleSquares,
-            selected = !appearance.useDotPixels,
-            onClick = { onSetUseDotPixels(false) },
-            hapticsEnabled = settings.hapticsEnabled,
-            modifier = Modifier.weight(1f).testTag("style_squares"),
-          )
+          Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+          ) {
+            AppLanguage.entries.forEach { lang ->
+              FlatOptionButton(
+                label = lang.nativeLabel,
+                selected = settings.language == lang,
+                onClick = { onSetLanguage(lang) },
+                hapticsEnabled = settings.hapticsEnabled,
+                modifier = Modifier.weight(1f).testTag("lang_${lang.code}"),
+              )
+            }
+          }
         }
-      }
 
-      SettingsGroupCard(index = 3, title = strings.settingsControls) {
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+        // 4. SOUND
+        SettingsSection(
+          index = 4,
+          monoTag = strings.sectionSoundTag,
+          arabicTitle = strings.soundLabel,
         ) {
-          SettingOptionPill(
-            label = strings.controlSwipe,
-            selected = settings.controlScheme == ControlScheme.SWIPE,
-            onClick = { onSetControlScheme(ControlScheme.SWIPE) },
-            hapticsEnabled = settings.hapticsEnabled,
-            modifier = Modifier.weight(1f).testTag("control_swipe"),
-          )
-          SettingOptionPill(
-            label = strings.controlTapZones,
-            selected = settings.controlScheme == ControlScheme.TAP_ZONES,
-            onClick = { onSetControlScheme(ControlScheme.TAP_ZONES) },
-            hapticsEnabled = settings.hapticsEnabled,
-            modifier = Modifier.weight(1f).testTag("control_tap_zones"),
-          )
+          Column {
+            FlatToggleRow(
+              label = strings.settingsSound,
+              checked = settings.soundEnabled,
+              onCheckedChange = onSetSound,
+              testTag = "toggle_sound",
+            )
+            HairlineDivider(modifier = Modifier.fillMaxWidth())
+            FlatToggleRow(
+              label = strings.settingsHaptics,
+              checked = settings.hapticsEnabled,
+              onCheckedChange = onSetHaptics,
+              testTag = "toggle_haptics",
+            )
+            HairlineDivider(modifier = Modifier.fillMaxWidth())
+            FlatToggleRow(
+              label = strings.settingsTts,
+              checked = settings.ttsEnabled,
+              onCheckedChange = onSetTts,
+              testTag = "toggle_tts",
+            )
+          }
         }
-      }
 
-      SettingsGroupCard(index = 4, title = strings.settingsMode) {
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
-        ) {
-          SettingOptionPill(
-            label = strings.modeKids,
-            selected = settings.gameMode == GameMode.KIDS,
-            onClick = { onSetGameMode(GameMode.KIDS) },
-            hapticsEnabled = settings.hapticsEnabled,
-            modifier = Modifier.weight(1f),
-          )
-          SettingOptionPill(
-            label = strings.modeClassic,
-            selected = settings.gameMode == GameMode.CLASSIC,
-            onClick = { onSetGameMode(GameMode.CLASSIC) },
-            hapticsEnabled = settings.hapticsEnabled,
-            modifier = Modifier.weight(1f),
-          )
-          SettingOptionPill(
-            label = strings.modeHard,
-            selected = settings.gameMode == GameMode.HARD,
-            onClick = { onSetGameMode(GameMode.HARD) },
-            hapticsEnabled = settings.hapticsEnabled,
-            modifier = Modifier.weight(1f),
-          )
-        }
+        Spacer(modifier = Modifier.height(Dimens.SpaceLg))
       }
-
-      WidgetCard(
-        modifier = Modifier.fillMaxWidth().widgetStaggerEntrance(5),
-        shape = WidgetRadius.Card,
-        cornerRadiusDp = Dimens.CardRadius,
-      ) {
-        Column(
-          modifier = Modifier.padding(horizontal = Dimens.SpaceLg, vertical = Dimens.SpaceMd),
-          verticalArrangement = Arrangement.spacedBy(Dimens.SpaceXs),
-        ) {
-          NothingToggleRow(
-            label = strings.settingsDarkVariant,
-            checked = appearance.darkVariant,
-            onCheckedChange = onSetDarkVariant,
-            testTag = "toggle_dark_variant",
-          )
-          NothingToggleRow(
-            label = strings.settingsGlyphPulse,
-            checked = appearance.glyphPulseEnabled,
-            onCheckedChange = onSetGlyphPulse,
-            testTag = "toggle_glyph_pulse",
-          )
-          NothingToggleRow(
-            label = strings.settingsSound,
-            checked = settings.soundEnabled,
-            onCheckedChange = onSetSound,
-            testTag = "toggle_sound",
-          )
-          NothingToggleRow(
-            label = strings.settingsHaptics,
-            checked = settings.hapticsEnabled,
-            onCheckedChange = onSetHaptics,
-            testTag = "toggle_haptics",
-          )
-          NothingToggleRow(
-            label = strings.settingsTts,
-            checked = settings.ttsEnabled,
-            onCheckedChange = onSetTts,
-            testTag = "toggle_tts",
-          )
-          NothingToggleRow(
-            label = strings.settingsColorblind,
-            checked = settings.colorblindSafe,
-            onCheckedChange = onSetColorblind,
-            testTag = "toggle_colorblind",
-          )
-          NothingToggleRow(
-            label = strings.settingsLargeText,
-            checked = settings.largeText,
-            onCheckedChange = onSetLargeText,
-            testTag = "toggle_large_text",
-          )
-        }
-      }
-
-      Spacer(modifier = Modifier.height(Dimens.SpaceMd))
     }
   }
 }
 
 @Composable
-private fun SettingsGroupCard(
+private fun SettingsSection(
   index: Int,
-  title: String,
+  monoTag: String,
+  arabicTitle: String,
   content: @Composable () -> Unit,
 ) {
-  val palette = LocalNothingPalette.current
-  WidgetCard(
+  val palette = LocalPalette.current
+  Column(
     modifier = Modifier.fillMaxWidth().widgetStaggerEntrance(index),
-    shape = WidgetRadius.Card,
-    cornerRadiusDp = Dimens.CardRadius,
+    verticalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
   ) {
-    Column(
-      modifier = Modifier.fillMaxWidth().padding(Dimens.SpaceLg),
-      verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
     ) {
       Text(
-        text = title,
-        style = MaterialTheme.typography.titleMedium,
+        text = monoTag,
+        fontFamily = JetBrainsMonoFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = Dimens.CaptionSp,
+        color = palette.accent,
+      )
+      Text(
+        text = arabicTitle,
+        style = MaterialTheme.typography.bodyLarge,
         fontSize = Dimens.BodySp,
         fontWeight = FontWeight.SemiBold,
         color = palette.ink,
       )
-      content()
+    }
+    FlatCard(
+      modifier = Modifier.fillMaxWidth(),
+      shape = AppShapes.Card,
+    ) {
+      Box(modifier = Modifier.fillMaxWidth().padding(Dimens.SpaceLg)) {
+        content()
+      }
     }
   }
 }
 
 @Composable
-private fun SettingOptionPill(
+private fun FlatOptionButton(
   label: String,
   selected: Boolean,
   onClick: () -> Unit,
   hapticsEnabled: Boolean,
   modifier: Modifier = Modifier,
 ) {
-  val palette = LocalNothingPalette.current
-  WidgetCard(
+  val palette = LocalPalette.current
+  FlatCard(
     modifier = modifier.height(Dimens.ButtonHeight),
-    shape = WidgetRadius.Pill,
-    cornerRadiusDp = 24.dp,
-    backgroundColor = if (selected) palette.accent else palette.widgetPressed,
+    shape = AppShapes.Button,
+    backgroundColor = if (selected) palette.accent else palette.canvas,
+    pressedBackgroundColor = if (selected) palette.accentPressed else palette.surfacePressed,
+    borderColor = if (selected) palette.accent else palette.hairline,
     hapticsEnabled = hapticsEnabled,
     onClick = onClick,
   ) {
-    Box(modifier = Modifier.fillMaxSize().padding(horizontal = Dimens.SpaceSm), contentAlignment = Alignment.Center) {
+    Box(
+      modifier = Modifier.fillMaxSize().padding(horizontal = Dimens.SpaceSm),
+      contentAlignment = Alignment.Center,
+    ) {
       Text(
         text = label,
         style = MaterialTheme.typography.labelLarge,
@@ -306,15 +357,15 @@ private fun SettingOptionPill(
 }
 
 @Composable
-private fun NothingToggleRow(
+private fun FlatToggleRow(
   label: String,
   checked: Boolean,
   onCheckedChange: (Boolean) -> Unit,
   testTag: String,
 ) {
-  val palette = LocalNothingPalette.current
+  val palette = LocalPalette.current
   Row(
-    modifier = Modifier.fillMaxWidth().padding(vertical = Dimens.SpaceXs),
+    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.SpaceBetween,
   ) {
@@ -325,7 +376,7 @@ private fun NothingToggleRow(
       color = palette.ink,
       modifier = Modifier.weight(1f).padding(end = Dimens.SpaceMd),
     )
-    NothingSwitch(
+    FlatSwitch(
       checked = checked,
       onCheckedChange = onCheckedChange,
       contentDescription = label,

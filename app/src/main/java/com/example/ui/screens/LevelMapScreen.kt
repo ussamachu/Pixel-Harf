@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -30,9 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -45,17 +43,16 @@ import com.example.model.LevelProgress
 import com.example.model.LevelSpec
 import com.example.ui.Dimens
 import com.example.ui.components.CircleButton
-import com.example.ui.components.DotIcon
-import com.example.ui.components.DotIconType
-import com.example.ui.components.DotStarRow
 import com.example.ui.components.DotText
-import com.example.ui.components.WidgetCard
+import com.example.ui.components.FlatCard
+import com.example.ui.components.HairlineDivider
+import com.example.ui.components.PixelIcon
 import com.example.ui.components.widgetStaggerEntrance
-import com.example.ui.theme.DotoFontFamily
-import com.example.ui.theme.LocalNothingPalette
+import com.example.ui.theme.AppShapes
+import com.example.ui.theme.JetBrainsMonoFamily
+import com.example.ui.theme.LocalPalette
 import com.example.ui.theme.LocalReduceMotion
 import com.example.ui.theme.NotoKufiFamily
-import com.example.ui.theme.WidgetRadius
 
 @Composable
 fun LevelMapScreen(
@@ -65,7 +62,7 @@ fun LevelMapScreen(
   onSelectLevel: (Int) -> Unit,
   onBack: () -> Unit,
 ) {
-  val palette = LocalNothingPalette.current
+  val palette = LocalPalette.current
   val reduceMotion = LocalReduceMotion.current
   val levelsByWorld = remember { LevelCatalog.levels.groupBy { it.world } }
   val totalStars = progress.starsByLevel.values.sum()
@@ -74,19 +71,19 @@ fun LevelMapScreen(
   val pulseTransition = rememberInfiniteTransition(label = "current_level_pulse")
   val pulseAlphaRaw by
     pulseTransition.animateFloat(
-      initialValue = 0.35f,
+      initialValue = 0.45f,
       targetValue = 1.0f,
       animationSpec = infiniteRepeatable(animation = tween(850), repeatMode = RepeatMode.Reverse),
       label = "current_pulse_alpha",
     )
-  val pulseAlpha = if (reduceMotion) 0.9f else pulseAlphaRaw
+  val pulseAlpha = if (reduceMotion) 1f else pulseAlphaRaw
 
   Box(
     modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding(),
     contentAlignment = Alignment.TopCenter,
   ) {
     Column(modifier = Modifier.widthIn(max = 620.dp).fillMaxSize()) {
-      // Top Navigation Bar
+      // Top bar
       Row(
         modifier =
           Modifier.fillMaxWidth()
@@ -100,49 +97,53 @@ fun LevelMapScreen(
           horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
         ) {
           CircleButton(
-            iconType = DotIconType.BACK,
+            iconType = PixelIcon.BACK,
             contentDescription = strings.backHome,
             onClick = onBack,
-            size = Dimens.SmallCircleButtonSize,
-            dotSize = 2.0.dp,
+            size = Dimens.CircleButtonSize,
+            iconSize = 24.dp,
             mirrorForRtl = true,
             hapticsEnabled = hapticsEnabled,
             modifier = Modifier.testTag("map_back_button"),
           )
           Text(
             text = strings.levelMap,
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.titleLarge,
+            fontSize = Dimens.TitleSp,
             color = palette.ink,
           )
         }
 
-        WidgetCard(
-          shape = WidgetRadius.Pill,
-          cornerRadiusDp = 24.dp,
-        ) {
+        FlatCard(shape = AppShapes.Card) {
           Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
           ) {
-            DotStarRow(stars = 1, dotSize = 1.6.dp, spacing = 0.dp, filledColor = palette.accent)
+            PixelIcon(
+              type = PixelIcon.STAR,
+              size = 16.dp,
+              contentDescription = strings.starsLabel,
+            )
             Text(
               text = strings.starsTotal(totalStars, maxStars),
-              fontFamily = DotoFontFamily,
+              fontFamily = JetBrainsMonoFamily,
               fontWeight = FontWeight.Bold,
-              fontSize = 14.sp,
+              fontSize = Dimens.CaptionSp,
               color = palette.ink,
             )
           }
         }
       }
 
+      HairlineDivider(modifier = Modifier.fillMaxWidth())
+
       BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val columns = if (maxWidth > 520.dp) 5 else 4
         LazyColumn(
           modifier = Modifier.fillMaxSize(),
-          contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceMd),
-          verticalArrangement = Arrangement.spacedBy(Dimens.SpaceXl),
+          contentPadding = PaddingValues(horizontal = Dimens.ScreenPadding, vertical = Dimens.SpaceLg),
+          verticalArrangement = Arrangement.spacedBy(Dimens.SectionGap),
         ) {
           for (world in 1..4) {
             val worldLevels = levelsByWorld[world].orEmpty()
@@ -151,15 +152,27 @@ fun LevelMapScreen(
                 modifier = Modifier.widgetStaggerEntrance(world - 1),
                 verticalArrangement = Arrangement.spacedBy(Dimens.SpaceMd),
               ) {
-                // Compact 2-line header per world (~22sp dot-text title + 12sp subtitle)
+                // Mono section tag ("WORLD 1") + Arabic world title + short description
                 Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpaceXs)) {
-                  DotText(
-                    text = strings.worldTitle(world),
-                    fontResId = R.font.noto_kufi_arabic,
-                    dotSize = Dimens.DotWorldTitleDotSize,
-                    color = palette.ink,
-                    targetRows = 13,
-                  )
+                  Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.SpaceSm),
+                  ) {
+                    Text(
+                      text = strings.worldTag(world),
+                      fontFamily = JetBrainsMonoFamily,
+                      fontWeight = FontWeight.Bold,
+                      fontSize = Dimens.CaptionSp,
+                      color = palette.accent,
+                    )
+                    DotText(
+                      text = strings.worldTitle(world),
+                      fontResId = R.font.noto_kufi_arabic,
+                      dotSize = Dimens.DotWorldTitleSize,
+                      color = palette.ink,
+                      targetRows = 13,
+                    )
+                  }
                   Text(
                     text = strings.worldDesc(world),
                     style = MaterialTheme.typography.bodyMedium,
@@ -220,35 +233,25 @@ private fun LevelCircleTile(
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  val palette = LocalNothingPalette.current
+  val palette = LocalPalette.current
   val completed = stars > 0
-  val accentColor = palette.accent
 
   Column(
     modifier = modifier,
     horizontalAlignment = Alignment.CenterHorizontally,
     verticalArrangement = Arrangement.spacedBy(Dimens.SpaceXs),
   ) {
-    WidgetCard(
+    FlatCard(
       modifier =
         Modifier.fillMaxWidth()
           .aspectRatio(1f)
           .alpha(if (unlocked) 1f else 0.55f)
-          .let { m ->
-            if (isCurrent) {
-              m.drawBehind {
-                drawCircle(
-                  color = accentColor.copy(alpha = pulseAlpha),
-                  radius = size.minDimension * 0.49f,
-                  style = Stroke(width = 3.5f),
-                )
-              }
-            } else m
-          }
           .testTag("level_tile_${spec.levelNumber}"),
       shape = CircleShape,
-      cornerRadiusDp = 48.dp,
-      backgroundColor = if (isCurrent) palette.accent else palette.widgetSurface,
+      backgroundColor = palette.surface,
+      pressedBackgroundColor = palette.surfacePressed,
+      borderColor = if (isCurrent) palette.accent.copy(alpha = pulseAlpha) else palette.hairline,
+      borderWidth = if (isCurrent) 2.dp else Dimens.HairlineWidth,
       hapticsEnabled = hapticsEnabled,
       onClick = if (unlocked) onClick else null,
     ) {
@@ -256,26 +259,24 @@ private fun LevelCircleTile(
         if (unlocked) {
           Text(
             text = levelLabel,
-            fontFamily = DotoFontFamily,
+            fontFamily = JetBrainsMonoFamily,
             fontWeight = FontWeight.Bold,
             fontSize = 10.sp,
-            color = if (isCurrent) Color.White.copy(alpha = 0.9f) else palette.mutedInk,
+            color = if (isCurrent) palette.accent else palette.mutedInk,
             modifier = Modifier.align(Alignment.TopCenter),
           )
           Text(
             text = spec.letter.glyph,
             fontFamily = NotoKufiFamily,
             fontWeight = FontWeight.Bold,
-            fontSize = 24.sp,
-            color = if (isCurrent) Color.White else palette.ink,
+            fontSize = 22.sp,
+            color = palette.ink,
             modifier = Modifier.align(Alignment.Center),
           )
         } else {
-          // Locked levels: faint lock icon only, no ghost letter
-          DotIcon(
-            type = DotIconType.LOCK,
-            dotSize = 1.9.dp,
-            color = palette.mutedInk.copy(alpha = 0.6f),
+          PixelIcon(
+            type = PixelIcon.LOCK,
+            size = 24.dp,
             contentDescription = levelLabel,
             modifier = Modifier.align(Alignment.Center),
           )
@@ -284,15 +285,17 @@ private fun LevelCircleTile(
     }
 
     if (completed) {
-      DotStarRow(
-        stars = stars,
-        dotSize = 1.5.dp,
-        spacing = 3.dp,
-        filledColor = palette.ink,
-        emptyColor = palette.faintDot,
-      )
+      Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+        for (i in 1..3) {
+          PixelIcon(
+            type = if (i <= stars) PixelIcon.STAR else PixelIcon.STAR_OUTLINE,
+            size = 16.dp,
+            contentDescription = null,
+          )
+        }
+      }
     } else {
-      Spacer(modifier = Modifier.height(10.dp))
+      Spacer(modifier = Modifier.height(16.dp))
     }
   }
 }
