@@ -72,6 +72,13 @@ data class AppStrings(
   val coachmarkPowerUpDesc: String,
   val coachmarkDismiss: String,
   val livesContentDesc: String,
+  val unitPoints: String,
+  val unitDoneShort: String,
+  val unitStreakDays: String,
+  val progressSemantic: (Int, Int) -> String,
+  val starsSemantic: (Int, Int) -> String,
+  val bestScoreSemantic: (Int) -> String,
+  val streakSemantic: (Int) -> String,
 )
 
 fun stringsFor(language: AppLanguage): AppStrings =
@@ -173,6 +180,13 @@ fun stringsFor(language: AppLanguage): AppStrings =
         coachmarkPowerUpDesc = "تظهر قدرات التعزيز هنا أثناء اللعب عند التقاطها",
         coachmarkDismiss = "فهمت",
         livesContentDesc = "المحاولات المتبقية",
+        unitPoints = "XP",
+        unitDoneShort = "تم",
+        unitStreakDays = "7d",
+        progressSemantic = { done, total -> "$done من $total حرفا مكتملا" },
+        starsSemantic = { earned, max -> "$earned من $max نجمة" },
+        bestScoreSemantic = { best -> "أفضل نتيجة $best نقطة" },
+        streakSemantic = { days -> "سلسلة $days أيام من 7" },
       )
     AppLanguage.EN ->
       AppStrings(
@@ -271,6 +285,13 @@ fun stringsFor(language: AppLanguage): AppStrings =
         coachmarkPowerUpDesc = "Active power-ups and timers appear here",
         coachmarkDismiss = "Got it",
         livesContentDesc = "Remaining lives",
+        unitPoints = "XP",
+        unitDoneShort = "OK",
+        unitStreakDays = "7d",
+        progressSemantic = { done, total -> "$done of $total letters done" },
+        starsSemantic = { earned, max -> "$earned of $max stars earned" },
+        bestScoreSemantic = { best -> "Best score $best points" },
+        streakSemantic = { days -> "$days of 7 daily streak days" },
       )
     AppLanguage.FR ->
       AppStrings(
@@ -369,5 +390,12 @@ fun stringsFor(language: AppLanguage): AppStrings =
         coachmarkPowerUpDesc = "Les bonus actifs s'affichent ici",
         coachmarkDismiss = "Compris",
         livesContentDesc = "Vies restantes",
+        unitPoints = "XP",
+        unitDoneShort = "OK",
+        unitStreakDays = "7j",
+        progressSemantic = { done, total -> "$done sur $total lettres terminées" },
+        starsSemantic = { earned, max -> "$earned sur $max étoiles" },
+        bestScoreSemantic = { best -> "Meilleur score $best points" },
+        streakSemantic = { days -> "Série de $days sur 7 jours" },
       )
   }

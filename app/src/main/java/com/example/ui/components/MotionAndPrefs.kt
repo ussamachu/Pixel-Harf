@@ -85,7 +85,7 @@ fun Modifier.widgetStaggerEntrance(index: Int): Modifier = composed {
     if (reduceMotion) {
       visible = true
     } else {
-      delay((index.coerceIn(0, 6) * 24L))
+      delay((index.coerceIn(0, 6) * 45L))
       visible = true
     }
   }
@@ -93,7 +93,7 @@ fun Modifier.widgetStaggerEntrance(index: Int): Modifier = composed {
   val alpha by
     animateFloatAsState(
       targetValue = if (visible) 1f else 0f,
-      animationSpec = tween(durationMillis = if (reduceMotion) 0 else 170, easing = EaseOut),
+      animationSpec = tween(durationMillis = if (reduceMotion) 0 else 200, easing = EaseOut),
       label = "entrance_alpha",
     )
 
